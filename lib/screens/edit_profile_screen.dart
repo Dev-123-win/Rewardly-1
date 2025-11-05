@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+import '../widgets/custom_app_bar.dart'; // Import CustomAppBar
 
 class EditProfileScreen extends StatefulWidget {
+  static const String routeName = '/edit-profile';
+
   const EditProfileScreen({super.key});
 
   @override
@@ -18,7 +21,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    _displayNameController.text = userProvider.userData?['displayName'] ?? '';
+    _displayNameController.text = userProvider.currentUser?.displayName ?? '';
   }
 
   Future<void> _updateProfile() async {
@@ -30,7 +33,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       try {
         // In a real app, you would have a method in UserProvider to update the user's profile.
         // For this example, we'll just show a success message.
-        await Future.delayed(const Duration(seconds: 1)); // Simulate network request
+        await Future.delayed(
+          const Duration(seconds: 1),
+        ); // Simulate network request
 
         if (mounted) {
           Navigator.of(context).pop();
@@ -41,7 +46,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to update profile: ${e.toString()}')),
+            SnackBar(
+              content: Text('Failed to update profile: ${e.toString()}'),
+            ),
           );
         }
       } finally {
@@ -57,8 +64,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Profile'),
+      appBar: CustomAppBar(
+        title: 'Edit Profile',
+        onBack: () => Navigator.of(context).pop(),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

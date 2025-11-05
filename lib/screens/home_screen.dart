@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../widgets/daily_reward_modal.dart';
+import '../widgets/custom_app_bar.dart'; // Import CustomAppBar
 import 'invite_screen.dart';
 import 'transaction_history_screen.dart';
 import 'profile_screen.dart';
@@ -11,6 +12,8 @@ import 'tic_tac_toe_screen.dart';
 import 'withdraw_screen.dart';
 
 class HomeScreen extends StatefulWidget {
+  static const String routeName = '/home';
+
   const HomeScreen({super.key});
 
   @override
@@ -36,27 +39,16 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
-      ),
+      body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_add),
             label: 'Invite',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.amber[800],
@@ -75,8 +67,8 @@ class HomeTab extends StatelessWidget {
     final userProvider = Provider.of<UserProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Earning App'),
+      appBar: CustomAppBar(
+        title: 'Earning App',
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -84,7 +76,7 @@ class HomeTab extends StatelessWidget {
               children: [
                 const Icon(Icons.monetization_on),
                 const SizedBox(width: 4),
-                Text(userProvider.userData?['coinBalance']?.toString() ?? '0'),
+                Text(userProvider.currentUser?.coinBalance.toString() ?? '0'),
               ],
             ),
           ),
@@ -105,50 +97,36 @@ class HomeTab extends StatelessWidget {
               child: const Text('Claim Daily Reward'),
             ),
             const SizedBox(height: 20),
-            const Text('Earning Methods',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Earning Methods',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
             ListTile(
               leading: const Icon(Icons.movie),
               title: const Text('Watch Ads'),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const WatchAdsScreen()),
-                );
+                Navigator.pushNamed(context, WatchAdsScreen.routeName);
               },
             ),
             ListTile(
               leading: const Icon(Icons.casino),
               title: const Text('Spin & Win'),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const SpinAndWinScreen()),
-                );
+                Navigator.pushNamed(context, SpinAndWinScreen.routeName);
               },
             ),
             ListTile(
               leading: const Icon(Icons.gamepad),
               title: const Text('Tic-Tac-Toe'),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const TicTacToeScreen()),
-                );
+                Navigator.pushNamed(context, TicTacToeScreen.routeName);
               },
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const WithdrawScreen()),
-                );
+                Navigator.pushNamed(context, WithdrawScreen.routeName);
               },
               child: const Text('Withdraw'),
             ),

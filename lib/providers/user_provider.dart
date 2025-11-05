@@ -3,12 +3,77 @@ import 'dart:convert'; // For JSON encoding/decoding
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+// Import for RewardItem
 import '../main.dart'; // Import the global sharedPreferences
 import 'config_provider.dart'; // Import ConfigProvider
 
+// Define a simple User model to encapsulate user data
+class AppUser {
+  final String uid;
+  final String? email;
+  final String? displayName;
+  final String? photoURL;
+  final String? referralCode;
+  final String? referredBy;
+  final int coinBalance;
+  final int totalEarned;
+  final int totalWithdrawn;
+  final List<String> activeDays;
+  final String? lastActiveDate;
+  final Map<String, dynamic> dailyStats;
+  final Map<String, dynamic>? withdrawalInfo;
+
+  AppUser({
+    required this.uid,
+    this.email,
+    this.displayName,
+    this.photoURL,
+    this.referralCode,
+    this.referredBy,
+    this.coinBalance = 0,
+    this.totalEarned = 0,
+    this.totalWithdrawn = 0,
+    this.activeDays = const [],
+    this.lastActiveDate,
+    this.dailyStats = const {},
+    this.withdrawalInfo,
+  });
+
+  factory AppUser.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return AppUser.fromMap(doc.id, data);
+  }
+
+  factory AppUser.fromMap(String uid, Map<String, dynamic> data) {
+    return AppUser(
+      uid: uid,
+      email: data['email'],
+      displayName: data['displayName'],
+      photoURL: data['photoURL'],
+      referralCode: data['referralCode'],
+      referredBy: data['referredBy'],
+      coinBalance: data['coinBalance'] ?? 0,
+      totalEarned: data['totalEarned'] ?? 0,
+      totalWithdrawn: data['totalWithdrawn'] ?? 0,
+      activeDays: List<String>.from(data['activeDays'] ?? []),
+      lastActiveDate: data['lastActiveDate'],
+      dailyStats: Map<String, dynamic>.from(data['dailyStats'] ?? {}),
+      withdrawalInfo: data['withdrawalInfo'] != null
+          ? Map<String, dynamic>.from(data['withdrawalInfo'])
+          : null,
+    );
+  }
+
+  // Helper to get today's stats
+  Map<String, dynamic> get todayStats {
+    final String today = DateTime.now().toIso8601String().substring(0, 10);
+    return Map<String, dynamic>.from(dailyStats[today] ?? {});
+  }
+}
+
 class UserProvider with ChangeNotifier {
-  Map<String, dynamic>? _userData;
-  Map<String, dynamic>? get userData => _userData;
+  AppUser? _currentUser;
+  AppUser? get currentUser => _currentUser;
 
   List<Map<String, dynamic>> _referredUsers = [];
   List<Map<String, dynamic>> get referredUsers => _referredUsers;
@@ -37,6 +102,22 @@ class UserProvider with ChangeNotifier {
     _startScheduledSync(); // Start the periodic sync
   }
 
+  Future<void> loadUser() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final prefs = sharedPreferences;
+    final lastFetchDate = prefs.getString('lastFetchDate');
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+
+    if (lastFetchDate != today) {
+      await fetchUserData(user.uid, forceRefresh: true);
+      await prefs.setString('lastFetchDate', today);
+    } else {
+      await fetchUserData(user.uid);
+    }
+  }
+
   @override
   void dispose() {
     _syncTimer?.cancel(); // Cancel the timer when the provider is disposed
@@ -50,8 +131,8 @@ class UserProvider with ChangeNotifier {
 
     final String? cachedUser = sharedPreferences.getString('user_data_$uid');
     if (!forceRefresh && cachedUser != null) {
-      _userData = json.decode(cachedUser);
-      _referralCode = _userData?['referralCode'];
+      _currentUser = AppUser.fromMap(uid, json.decode(cachedUser));
+      _referralCode = _currentUser?.referralCode;
       notifyListeners();
     } else {
       incrementReadsCount();
@@ -62,40 +143,60 @@ class UserProvider with ChangeNotifier {
         .collection('users')
         .doc(uid)
         .snapshots()
-        .listen((snapshot) {
-      if (snapshot.exists) {
-        _userData = snapshot.data();
-        _referralCode = _userData?['referralCode'];
-        sharedPreferences.setString('user_data_$uid', json.encode(_userData));
-        notifyListeners();
-      } else {
-        _userData = null;
-        _referralCode = null;
-        sharedPreferences.remove('user_data_$uid');
-        notifyListeners();
-      }
-    }, onError: (error) {
-      // Handle stream errors, e.g., permissions denied
-    });
+        .listen(
+          (snapshot) {
+            if (snapshot.exists) {
+              _currentUser = AppUser.fromFirestore(snapshot);
+              _referralCode = _currentUser?.referralCode;
+              sharedPreferences.setString(
+                'user_data_$uid',
+                json.encode(snapshot.data()),
+              );
+              notifyListeners();
+            } else {
+              _currentUser = null;
+              _referralCode = null;
+              sharedPreferences.remove('user_data_$uid');
+              notifyListeners();
+            }
+          },
+          onError: (error) {
+            // Handle stream errors, e.g., permissions denied
+          },
+        );
 
     // Set up referrals stream
     _referralsStreamSubscription = FirebaseFirestore.instance
         .collection('referrals')
         .where('referrerId', isEqualTo: uid)
         .snapshots()
-        .listen((snapshot) {
-      _referredUsers = snapshot.docs.map((doc) => doc.data()).toList();
-      notifyListeners();
-    }, onError: (error) {
-      // Handle stream errors
-    });
+        .listen(
+          (snapshot) {
+            _referredUsers = snapshot.docs.map((doc) => doc.data()).toList();
+            notifyListeners();
+          },
+          onError: (error) {
+            // Handle stream errors
+          },
+        );
 
     // Also attempt to sync any pending writes
     _syncWritesToFirestore(force: true);
   }
 
+  Future<void> saveWithdrawalInfo(Map<String, dynamic> withdrawalInfo) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final userRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
+    await userRef.update({'withdrawalInfo': withdrawalInfo});
+    await fetchUserData(user.uid, forceRefresh: true);
+  }
+
   void clearUserData() {
-    _userData = null;
+    _currentUser = null;
     _referralCode = null;
     _referredUsers = [];
     _localDailyStats = {};
@@ -114,7 +215,9 @@ class UserProvider with ChangeNotifier {
     sharedPreferences.remove('localWritesCount');
     sharedPreferences.remove('localReadsCount');
     sharedPreferences.remove('lastSyncDate');
-    sharedPreferences.remove('firestoreWritesCount_${DateTime.now().toIso8601String().substring(0, 10)}'); // Clear today's write count
+    sharedPreferences.remove(
+      'firestoreWritesCount_${DateTime.now().toIso8601String().substring(0, 10)}',
+    ); // Clear today's write count
 
     _userStreamSubscription?.cancel();
     _referralsStreamSubscription?.cancel();
@@ -147,9 +250,15 @@ class UserProvider with ChangeNotifier {
       throw Exception("Cannot redeem your own referral code.");
     }
 
-    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
-    final referrerRef = FirebaseFirestore.instance.collection('users').doc(referrerId);
-    final appConfigRef = FirebaseFirestore.instance.collection('app_config').doc('settings');
+    final userRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
+    final referrerRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(referrerId);
+    final appConfigRef = FirebaseFirestore.instance
+        .collection('app_config')
+        .doc('settings');
 
     // The transaction reads will be counted by the transaction itself.
     // No need to manually increment here.
@@ -216,7 +325,9 @@ class UserProvider with ChangeNotifier {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
     final String today = DateTime.now().toIso8601String().substring(0, 10);
 
     // No direct Firestore read here, as we're relying on the transaction to read.
@@ -234,43 +345,43 @@ class UserProvider with ChangeNotifier {
         activeDays.add(today);
         _queueWrite({
           'type': 'user_update',
-          'data': {
-            'activeDays': activeDays,
-            'lastActiveDate': today,
-          },
+          'data': {'activeDays': activeDays, 'lastActiveDate': today},
         });
 
         // Check if this user was referred and update refereeActiveDays
-          if (userData['referredBy'] != null && userData['referredBy'] != '') {
-            // This is a read, so increment count
-            final referralQuery = await FirebaseFirestore.instance
-                .collection('referrals')
-                .where('refereeId', isEqualTo: user.uid)
-                .where('referrerRewarded', isEqualTo: false)
-                .limit(1)
-                .get();
-            _localReadsCount++;
-            await _saveLocalData();
+        if (userData['referredBy'] != null && userData['referredBy'] != '') {
+          // This is a read, so increment count
+          final referralQuery = await FirebaseFirestore.instance
+              .collection('referrals')
+              .where('refereeId', isEqualTo: user.uid)
+              .where('referrerRewarded', isEqualTo: false)
+              .limit(1)
+              .get();
+          _localReadsCount++;
+          await _saveLocalData();
 
           if (referralQuery.docs.isNotEmpty) {
             final referralDoc = referralQuery.docs.first;
             final referralRef = referralDoc.reference;
-            int currentActiveDays = referralDoc.data()['refereeActiveDays'] ?? 0;
+            int currentActiveDays =
+                referralDoc.data()['refereeActiveDays'] ?? 0;
 
             if (currentActiveDays < 3) {
               _queueWrite({
                 'type': 'referral_update',
                 'docRef': referralRef,
-                'data': {
-                  'refereeActiveDays': FieldValue.increment(1),
-                },
+                'data': {'refereeActiveDays': FieldValue.increment(1)},
               });
 
               if (currentActiveDays + 1 == 3) {
                 // Award referrer bonus
                 final referrerId = referralDoc.data()['referrerId'];
-                final referrerRef = FirebaseFirestore.instance.collection('users').doc(referrerId);
-                final appConfigRef = FirebaseFirestore.instance.collection('app_config').doc('settings');
+                final referrerRef = FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(referrerId);
+                final appConfigRef = FirebaseFirestore.instance
+                    .collection('app_config')
+                    .doc('settings');
 
                 // The transaction reads will be counted by the transaction itself.
                 // No need to manually increment here.
@@ -280,7 +391,8 @@ class UserProvider with ChangeNotifier {
 
                 if (referrerUserDoc.exists && appConfigDoc.exists) {
                   final appConfig = appConfigDoc.data()!;
-                  final int referrerBonus = appConfig['rewards']?['referrerBonus'] ?? 500;
+                  final int referrerBonus =
+                      appConfig['rewards']?['referrerBonus'] ?? 500;
 
                   _queueWrite({
                     'type': 'user_update',
@@ -310,7 +422,10 @@ class UserProvider with ChangeNotifier {
                       'amount': referrerBonus,
                       'timestamp': FieldValue.serverTimestamp(),
                       'status': 'completed',
-                      'metadata': {'refereeId': user.uid, 'referralCode': userData['referredBy']},
+                      'metadata': {
+                        'refereeId': user.uid,
+                        'referralCode': userData['referredBy'],
+                      },
                     },
                   });
                 }
@@ -327,10 +442,18 @@ class UserProvider with ChangeNotifier {
     final String today = DateTime.now().toIso8601String().substring(0, 10);
 
     _lastSyncDate = sharedPreferences.getString('lastSyncDate') ?? '';
-    final String? dailyStatsJson = sharedPreferences.getString('localDailyStats');
-    final String? pendingWritesJson = sharedPreferences.getString('pendingWrites');
-    final String? localWritesCount = sharedPreferences.getString('localWritesCount');
-    final String? localReadsCount = sharedPreferences.getString('localReadsCount');
+    final String? dailyStatsJson = sharedPreferences.getString(
+      'localDailyStats',
+    );
+    final String? pendingWritesJson = sharedPreferences.getString(
+      'pendingWrites',
+    );
+    final String? localWritesCount = sharedPreferences.getString(
+      'localWritesCount',
+    );
+    final String? localReadsCount = sharedPreferences.getString(
+      'localReadsCount',
+    );
 
     if (dailyStatsJson != null) {
       _localDailyStats = jsonDecode(dailyStatsJson) as Map<String, dynamic>;
@@ -339,7 +462,9 @@ class UserProvider with ChangeNotifier {
     }
 
     if (pendingWritesJson != null) {
-      _pendingWrites = (jsonDecode(pendingWritesJson) as List).map((e) => e as Map<String, dynamic>).toList();
+      _pendingWrites = (jsonDecode(pendingWritesJson) as List)
+          .map((e) => e as Map<String, dynamic>)
+          .toList();
     } else {
       _pendingWrites = [];
     }
@@ -364,10 +489,22 @@ class UserProvider with ChangeNotifier {
   }
 
   Future<void> _saveLocalData() async {
-    await sharedPreferences.setString('localDailyStats', jsonEncode(_localDailyStats));
-    await sharedPreferences.setString('pendingWrites', jsonEncode(_pendingWrites));
-    await sharedPreferences.setString('localWritesCount', _localWritesCount.toString());
-    await sharedPreferences.setString('localReadsCount', _localReadsCount.toString());
+    await sharedPreferences.setString(
+      'localDailyStats',
+      jsonEncode(_localDailyStats),
+    );
+    await sharedPreferences.setString(
+      'pendingWrites',
+      jsonEncode(_pendingWrites),
+    );
+    await sharedPreferences.setString(
+      'localWritesCount',
+      _localWritesCount.toString(),
+    );
+    await sharedPreferences.setString(
+      'localReadsCount',
+      _localReadsCount.toString(),
+    );
     await sharedPreferences.setString('lastSyncDate', _lastSyncDate);
   }
 
@@ -385,12 +522,16 @@ class UserProvider with ChangeNotifier {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
     final batch = FirebaseFirestore.instance.batch();
 
     final String today = DateTime.now().toIso8601String().substring(0, 10);
-    final int dailyWriteLimit = configProvider?.getConfig('dailyWriteLimit', defaultValue: 3) ?? 3;
-    int currentFirestoreWrites = sharedPreferences.getInt('firestoreWritesCount_$today') ?? 0;
+    final int dailyWriteLimit =
+        configProvider?.getConfig('dailyWriteLimit', defaultValue: 3) ?? 3;
+    int currentFirestoreWrites =
+        sharedPreferences.getInt('firestoreWritesCount_$today') ?? 0;
 
     if (!force && currentFirestoreWrites >= dailyWriteLimit) {
       return;
@@ -422,12 +563,16 @@ class UserProvider with ChangeNotifier {
     }
 
     for (var transactionData in newTransactions) {
-      final transactionRef = FirebaseFirestore.instance.collection('transactions').doc();
+      final transactionRef = FirebaseFirestore.instance
+          .collection('transactions')
+          .doc();
       batch.set(transactionRef, transactionData);
     }
 
     for (var referralData in newReferrals) {
-      final referralRef = FirebaseFirestore.instance.collection('referrals').doc();
+      final referralRef = FirebaseFirestore.instance
+          .collection('referrals')
+          .doc();
       batch.set(referralRef, referralData);
     }
 
@@ -437,7 +582,9 @@ class UserProvider with ChangeNotifier {
     }
 
     for (var withdrawalData in withdrawalRequests) {
-      final withdrawalRef = FirebaseFirestore.instance.collection('withdrawals').doc();
+      final withdrawalRef = FirebaseFirestore.instance
+          .collection('withdrawals')
+          .doc();
       batch.set(withdrawalRef, withdrawalData);
     }
 
@@ -449,7 +596,10 @@ class UserProvider with ChangeNotifier {
 
       // Update Firestore write count locally
       currentFirestoreWrites++;
-      await sharedPreferences.setInt('firestoreWritesCount_$today', currentFirestoreWrites);
+      await sharedPreferences.setInt(
+        'firestoreWritesCount_$today',
+        currentFirestoreWrites,
+      );
 
       notifyListeners();
     } catch (e) {
@@ -493,12 +643,13 @@ class UserProvider with ChangeNotifier {
     });
   }
 
-
   Future<void> claimDailyReward(int dailyRewardAmount) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
 
     // No direct Firestore read here, as we're relying on the transaction to read.
     // The transaction itself will increment read counts.
@@ -513,15 +664,21 @@ class UserProvider with ChangeNotifier {
 
         final userData = userDoc.data()!;
 
-        final String today = DateTime.now().toIso8601String().substring(0, 10); // YYYY-MM-DD
+        final String today = DateTime.now().toIso8601String().substring(
+          0,
+          10,
+        ); // YYYY-MM-DD
         final String lastActiveDate = userData['lastActiveDate'] ?? '';
         final Map<String, dynamic> dailyStats = userData['dailyStats'] ?? {};
         final Map<String, dynamic> todayStats = dailyStats[today] ?? {};
 
-        final bool dailyRewardClaimed = todayStats['dailyRewardClaimed'] ?? false;
+        final bool dailyRewardClaimed =
+            todayStats['dailyRewardClaimed'] ?? false;
 
         if (dailyRewardClaimed || lastActiveDate == today) {
-          throw Exception("Daily reward already claimed today or user not active on a new day.");
+          throw Exception(
+            "Daily reward already claimed today or user not active on a new day.",
+          );
         }
 
         final int currentBalance = userData['coinBalance'] ?? 0;
@@ -564,14 +721,13 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  Future<void> watchAdAndEarnCoins(int adRewardAmount, int dailyAdLimit) async {
+  Future<void> recordAdWatch(int adRewardAmount) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null || _currentUser == null) return;
 
-    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
-
-    // No direct Firestore read here, as we're relying on the transaction to read.
-    // The transaction itself will increment read counts.
+    final userRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
 
     try {
       await FirebaseFirestore.instance.runTransaction((transaction) async {
@@ -581,25 +737,20 @@ class UserProvider with ChangeNotifier {
           throw Exception("User not found");
         }
 
-        final userData = userDoc.data()!;
-
-        final String today = DateTime.now().toIso8601String().substring(0, 10); // YYYY-MM-DD
-        final Map<String, dynamic> dailyStats = userData['dailyStats'] ?? {};
-        final Map<String, dynamic> todayStats = dailyStats[today] ?? {};
-
-        final int adsWatchedToday = todayStats['adsWatched'] ?? 0;
+        final AppUser updatedUser = AppUser.fromFirestore(userDoc);
+        final String today = DateTime.now().toIso8601String().substring(0, 10);
+        final int dailyAdLimit =
+            configProvider?.appConfig['dailyAdLimit'] ?? 10;
+        final int adsWatchedToday = updatedUser.todayStats['adsWatched'] ?? 0;
 
         if (adsWatchedToday >= dailyAdLimit) {
           throw Exception("Daily ad watch limit reached.");
         }
 
-        final int currentBalance = userData['coinBalance'] ?? 0;
-        final int totalEarned = userData['totalEarned'] ?? 0;
-
         // Update local daily stats
         _localDailyStats[today] = {
           ...(_localDailyStats[today] ?? {}),
-          'adsWatched': (todayStats['adsWatched'] ?? 0) + 1,
+          'adsWatched': adsWatchedToday + 1,
         };
         _localWritesCount++;
 
@@ -607,8 +758,8 @@ class UserProvider with ChangeNotifier {
         _queueWrite({
           'type': 'user_update',
           'data': {
-            'coinBalance': currentBalance + adRewardAmount,
-            'totalEarned': totalEarned + adRewardAmount,
+            'coinBalance': FieldValue.increment(adRewardAmount),
+            'totalEarned': FieldValue.increment(adRewardAmount),
             'dailyStats.$today.adsWatched': FieldValue.increment(1),
             'dailyStats.$today.writesCount': FieldValue.increment(1),
           },
@@ -626,6 +777,8 @@ class UserProvider with ChangeNotifier {
           },
         });
       });
+      // After successful transaction, update local _currentUser and notify listeners
+      await fetchUserData(user.uid, forceRefresh: true);
     } catch (e) {
       rethrow;
     }
@@ -635,7 +788,9 @@ class UserProvider with ChangeNotifier {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
 
     // No direct Firestore read here, as we're relying on the transaction to read.
     // The transaction itself will increment read counts.
@@ -650,7 +805,10 @@ class UserProvider with ChangeNotifier {
 
         final userData = userDoc.data()!;
 
-        final String today = DateTime.now().toIso8601String().substring(0, 10); // YYYY-MM-DD
+        final String today = DateTime.now().toIso8601String().substring(
+          0,
+          10,
+        ); // YYYY-MM-DD
         final Map<String, dynamic> dailyStats = userData['dailyStats'] ?? {};
         final Map<String, dynamic> todayStats = dailyStats[today] ?? {};
 
@@ -702,7 +860,9 @@ class UserProvider with ChangeNotifier {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
 
     // No direct Firestore read here, as we're relying on the transaction to read.
     // The transaction itself will increment read counts.
@@ -717,7 +877,10 @@ class UserProvider with ChangeNotifier {
 
         final userData = userDoc.data()!;
 
-        final String today = DateTime.now().toIso8601String().substring(0, 10); // YYYY-MM-DD
+        final String today = DateTime.now().toIso8601String().substring(
+          0,
+          10,
+        ); // YYYY-MM-DD
         final Map<String, dynamic> dailyStats = userData['dailyStats'] ?? {};
         final Map<String, dynamic> todayStats = dailyStats[today] ?? {};
 
@@ -760,11 +923,18 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  Future<void> requestWithdrawal(int amount, String method, Map<String, dynamic> details, int minWithdrawalCoins) async {
+  Future<void> requestWithdrawal(
+    int amount,
+    String method,
+    Map<String, dynamic> details,
+    int minWithdrawalCoins,
+  ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
 
     // No direct Firestore read here, as we're relying on the transaction to read.
     // The transaction itself will increment read counts.
@@ -782,7 +952,9 @@ class UserProvider with ChangeNotifier {
         final int currentBalance = userData['coinBalance'] ?? 0;
 
         if (amount < minWithdrawalCoins) {
-          throw Exception("Minimum withdrawal amount is $minWithdrawalCoins coins.");
+          throw Exception(
+            "Minimum withdrawal amount is $minWithdrawalCoins coins.",
+          );
         }
 
         if (amount > currentBalance) {
@@ -798,7 +970,8 @@ class UserProvider with ChangeNotifier {
           'data': {
             'coinBalance': currentBalance - amount,
             'totalWithdrawn': FieldValue.increment(amount),
-            'dailyStats.${DateTime.now().toIso8601String().substring(0, 10)}.writesCount': FieldValue.increment(1),
+            'dailyStats.${DateTime.now().toIso8601String().substring(0, 10)}.writesCount':
+                FieldValue.increment(1),
           },
         });
         _queueWrite({
@@ -832,11 +1005,11 @@ class UserProvider with ChangeNotifier {
 
   Future<void> runDailyReconciliation() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null || _userData == null) return;
+    if (user == null || _currentUser == null) return;
 
     final String userId = user.uid;
-    final int localBalance = _userData!['coinBalance'] ?? 0;
-    final int localTotalWithdrawn = _userData!['totalWithdrawn'] ?? 0;
+    final int localBalance = _currentUser!.coinBalance;
+    final int localTotalWithdrawn = _currentUser!.totalWithdrawn;
 
     // This is a read-intensive operation and should be used sparingly.
     // It's intended for internal validation, not for frequent user-facing updates.
@@ -866,7 +1039,8 @@ class UserProvider with ChangeNotifier {
         }
       }
 
-      if (calculatedBalance != localBalance || calculatedWithdrawn != localTotalWithdrawn) {
+      if (calculatedBalance != localBalance ||
+          calculatedWithdrawn != localTotalWithdrawn) {
         // In a real app, you would log this to a server for investigation.
         // For example: await FirebaseAnalytics.instance.logEvent(name: 'reconciliation_failed', parameters: {'user_id': userId});
       } else {

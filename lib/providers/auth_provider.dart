@@ -1,18 +1,50 @@
+import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'user_provider.dart';
 
 class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final UserProvider _userProvider;
+
+  AuthProvider(this._userProvider);
 
   User? get currentUser => _auth.currentUser;
 
+  Future<String?> _getDeviceId() async {
+    final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    if (Platform.isAndroid) {
+      final AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      return androidInfo.id;
+    } else if (Platform.isIOS) {
+      final IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+      return iosInfo.identifierForVendor;
+    }
+    return null;
+  }
+
   // Email/Password Sign Up
   Future<void> signUpWithEmailAndPassword(
-      String email, String password, String referralCode) async {
+    String email,
+    String password,
+    String referralCode,
+  ) async {
+    final deviceId = await _getDeviceId();
+    if (deviceId != null) {
+      final deviceDoc = await _firestore
+          .collection('devices')
+          .doc(deviceId)
+          .get();
+      if (deviceDoc.exists) {
+        throw Exception('Only one account can be created per device.');
+      }
+    }
+
     UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
@@ -35,7 +67,14 @@ class AuthProvider with ChangeNotifier {
         'lastActiveDate': '',
         'dailyStats': {},
         'withdrawalInfo': {},
+        'deviceId': deviceId,
       });
+
+      if (deviceId != null) {
+        await _firestore.collection('devices').doc(deviceId).set({
+          'userId': user.uid,
+        });
+      }
 
       // If a referral code was used, update referrer's balance (will be credited after 3 active days)
       if (referralCode.isNotEmpty) {
@@ -59,13 +98,17 @@ class AuthProvider with ChangeNotifier {
   // Email/Password Sign In
   Future<void> signInWithEmailAndPassword(String email, String password) async {
     await _auth.signInWithEmailAndPassword(email: email, password: password);
+    if (currentUser != null) {
+      await _userProvider.fetchUserData(currentUser!.uid, forceRefresh: true);
+    }
     notifyListeners();
   }
 
   // Google Sign-In
   Future<bool> signInWithGoogle() async {
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-    final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+    final GoogleSignInAuthentication? googleAuth =
+        await googleUser?.authentication;
     bool isNewUser = false;
 
     if (googleAuth != null) {
@@ -74,13 +117,27 @@ class AuthProvider with ChangeNotifier {
         idToken: googleAuth.idToken,
       );
 
-      UserCredential userCredential = await _auth.signInWithCredential(credential);
+      UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
       User? user = userCredential.user;
 
       if (user != null) {
+        final deviceId = await _getDeviceId();
+        if (deviceId != null) {
+          final deviceDoc = await _firestore
+              .collection('devices')
+              .doc(deviceId)
+              .get();
+          if (deviceDoc.exists && deviceDoc.data()?['userId'] != user.uid) {
+            throw Exception('Only one account can be created per device.');
+          }
+        }
         // Check if user already exists in Firestore
-        DocumentSnapshot userDoc =
-            await _firestore.collection('users').doc(user.uid).get();
+        DocumentSnapshot userDoc = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .get();
         if (!userDoc.exists) {
           isNewUser = true;
           // New user, create document
@@ -99,7 +156,15 @@ class AuthProvider with ChangeNotifier {
             'lastActiveDate': '',
             'dailyStats': {},
             'withdrawalInfo': {},
+            'deviceId': deviceId,
           });
+          if (deviceId != null) {
+            await _firestore.collection('devices').doc(deviceId).set({
+              'userId': user.uid,
+            });
+          }
+        } else {
+          await _userProvider.fetchUserData(user.uid, forceRefresh: true);
         }
       }
     }

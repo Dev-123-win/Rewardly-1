@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../providers/user_provider.dart';
+import '../widgets/custom_app_bar.dart'; // Import CustomAppBar
 
 class InviteScreen extends StatelessWidget {
+  static const String routeName = '/invite';
+
   const InviteScreen({super.key});
 
   @override
@@ -12,8 +15,9 @@ class InviteScreen extends StatelessWidget {
     final String referralCode = userProvider.referralCode ?? 'Generating...';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Invite & Earn'),
+      appBar: CustomAppBar(
+        title: 'Invite & Earn',
+        onBack: () => Navigator.of(context).pop(),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -32,7 +36,9 @@ class InviteScreen extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () {
-                Share.share('Join our app and get 200 bonus coins! Use my referral code: $referralCode');
+                Share.share(
+                  'Join our app and get 200 bonus coins! Use my referral code: $referralCode',
+                );
               },
               icon: const Icon(Icons.share),
               label: const Text('Share Code'),
@@ -50,14 +56,21 @@ class InviteScreen extends StatelessWidget {
                       itemCount: userProvider.referredUsers.length,
                       itemBuilder: (context, index) {
                         final referredUser = userProvider.referredUsers[index];
-                        final int activeDays = referredUser['refereeActiveDays'] ?? 0;
-                        final bool rewarded = referredUser['referrerRewarded'] ?? false;
+                        final int activeDays =
+                            referredUser['refereeActiveDays'] ?? 0;
+                        final bool rewarded =
+                            referredUser['referrerRewarded'] ?? false;
 
                         return ListTile(
-                          title: Text(referredUser['refereeId'] ?? 'Unknown User'),
+                          title: Text(
+                            referredUser['refereeId'] ?? 'Unknown User',
+                          ),
                           subtitle: Text('Active Days: $activeDays / 3'),
                           trailing: rewarded
-                              ? const Text('Rewarded', style: TextStyle(color: Colors.green))
+                              ? const Text(
+                                  'Rewarded',
+                                  style: TextStyle(color: Colors.green),
+                                )
                               : const Text('Pending'),
                         );
                       },

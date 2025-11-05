@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
+import '../widgets/custom_app_bar.dart'; // Import CustomAppBar
 
 class SettingsScreen extends StatelessWidget {
+  static const String routeName = '/settings';
+
   const SettingsScreen({super.key});
 
   @override
@@ -10,8 +13,9 @@ class SettingsScreen extends StatelessWidget {
     final settingsProvider = Provider.of<SettingsProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
+      appBar: CustomAppBar(
+        title: 'Settings',
+        onBack: () => Navigator.of(context).pop(),
       ),
       body: ListView(
         children: [

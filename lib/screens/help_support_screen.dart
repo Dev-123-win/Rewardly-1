@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import '../widgets/custom_app_bar.dart'; // Import CustomAppBar
 
 class HelpSupportScreen extends StatelessWidget {
+  static const String routeName = '/help-support';
+
   const HelpSupportScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Help & Support'),
+      appBar: CustomAppBar(
+        title: 'Help & Support',
+        onBack: () => Navigator.of(context).pop(),
       ),
       body: ListView(
         children: const [
@@ -17,7 +21,8 @@ class HelpSupportScreen extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text(
-                    'You can earn coins by claiming your daily reward, watching ads, spinning the wheel, and playing Tic-Tac-Toe.'),
+                  'You can earn coins by claiming your daily reward, watching ads, spinning the wheel, and playing Tic-Tac-Toe.',
+                ),
               ),
             ],
           ),
@@ -27,7 +32,8 @@ class HelpSupportScreen extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text(
-                    'You can withdraw your earnings once you have reached the minimum withdrawal amount. Go to the Withdraw screen and follow the instructions.'),
+                  'You can withdraw your earnings once you have reached the minimum withdrawal amount. Go to the Withdraw screen and follow the instructions.',
+                ),
               ),
             ],
           ),
@@ -37,7 +43,8 @@ class HelpSupportScreen extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text(
-                    'Share your referral code with your friends. When they sign up using your code, you will both receive bonus coins.'),
+                  'Share your referral code with your friends. When they sign up using your code, you will both receive bonus coins.',
+                ),
               ),
             ],
           ),

@@ -5,6 +5,7 @@ class AdProvider with ChangeNotifier {
   RewardedAd? _rewardedAd;
   bool _isRewardedAdReady = false;
 
+  RewardedAd? get rewardedAd => _rewardedAd; // Expose the ad for direct access
   bool get isRewardedAdReady => _isRewardedAdReady;
 
   void loadRewardedAd() {
@@ -19,31 +20,43 @@ class AdProvider with ChangeNotifier {
         },
         onAdFailedToLoad: (LoadAdError error) {
           _isRewardedAdReady = false;
+          _rewardedAd = null; // Ensure ad is null on failure
           notifyListeners();
         },
       ),
     );
   }
 
-  void showRewardedAd(Function onReward) {
+  void showRewardedAd({required Function(RewardItem) onAdEarned}) {
     if (_rewardedAd == null) {
+      debugPrint(
+        'Warning: Attempted to show rewarded ad before it was loaded.',
+      );
       return;
     }
     _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (RewardedAd ad) {
         ad.dispose();
-        loadRewardedAd();
+        _rewardedAd = null; // Clear ad after dismissal
+        loadRewardedAd(); // Load a new ad
       },
       onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+        debugPrint('Rewarded ad failed to show: $error');
         ad.dispose();
-        loadRewardedAd();
+        _rewardedAd = null; // Clear ad on failure
+        loadRewardedAd(); // Load a new ad
       },
     );
     _rewardedAd!.show(
       onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-        onReward();
+        onAdEarned(reward);
       },
     );
-    _rewardedAd = null;
+  }
+
+  @override
+  void dispose() {
+    _rewardedAd?.dispose();
+    super.dispose();
   }
 }

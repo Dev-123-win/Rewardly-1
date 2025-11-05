@@ -42,7 +42,9 @@ dependencies:
   share_plus: ^10.0.0 # Added for sharing referral code
   google_mobile_ads: ^6.0.0
   intl: ^0.18.1
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.5.3
+  device_info_plus: ^10.1.2
+  flutter_fortune_wheel: ^1.3.0
 
 dev_dependencies:
   flutter_test:
