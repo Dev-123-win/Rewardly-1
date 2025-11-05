@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom_app_bar.dart'; // Import CustomAppBar
+import 'package:iconsax/iconsax.dart';
+import '../widgets/custom_app_bar.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   static const String routeName = '/transaction-history';
@@ -50,16 +51,29 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         title: 'Transaction History',
         onBack: () => Navigator.of(context).pop(),
         actions: [
-          DropdownButton<String>(
-            value: _selectedFilter,
-            items: ['All', 'Earning', 'Withdrawal'].map((String value) {
-              return DropdownMenuItem<String>(value: value, child: Text(value));
-            }).toList(),
-            onChanged: (String? newValue) {
-              setState(() {
-                _selectedFilter = newValue!;
-              });
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: SegmentedButton<String>(
+              segments: ['All', 'Earning', 'Withdrawal'].map((String value) {
+                return ButtonSegment<String>(value: value, label: Text(value));
+              }).toList(),
+              selected: {_selectedFilter},
+              onSelectionChanged: (Set<String> newSelection) {
+                setState(() {
+                  _selectedFilter = newSelection.first;
+                });
+              },
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.resolveWith<Color>((
+                  Set<WidgetState> states,
+                ) {
+                  if (states.contains(WidgetState.selected)) {
+                    return Theme.of(context).colorScheme.secondaryContainer;
+                  }
+                  return Theme.of(context).colorScheme.surface;
+                }),
+              ),
+            ),
           ),
         ],
       ),
@@ -69,18 +83,47 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           final transaction = filteredTransactions[index];
           final bool isEarning = transaction['type'] == 'earning';
           final amount = transaction['amount'];
-          final color = isEarning ? Colors.green : Colors.red;
-          final icon = isEarning ? Icons.arrow_upward : Icons.arrow_downward;
+          final icon = isEarning ? Iconsax.arrow_up_2 : Iconsax.arrow_down_1;
 
-          return ListTile(
-            leading: Icon(icon, color: color),
-            title: Text(
-              transaction['subType'].replaceAll('_', ' ').toUpperCase(),
-            ),
-            subtitle: Text(transaction['timestamp']),
-            trailing: Text(
-              '${isEarning ? '+' : ''}$amount coins',
-              style: TextStyle(color: color, fontWeight: FontWeight.bold),
+          return Card(
+            elevation: 0,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isEarning
+                      ? Theme.of(context).colorScheme.primaryContainer
+                      : Theme.of(context).colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  icon,
+                  color: isEarning
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.error,
+                ),
+              ),
+              title: Text(
+                transaction['subType'].replaceAll('_', ' ').toUpperCase(),
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              subtitle: Text(
+                transaction['timestamp'],
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+              ),
+              trailing: Text(
+                '${isEarning ? '+' : ''}$amount coins',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: isEarning
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           );
         },

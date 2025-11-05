@@ -40,20 +40,31 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_add),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onItemTapped,
+        destinations: const <NavigationDestination>[
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_add_outlined),
+            selectedIcon: Icon(Icons.person_add),
             label: 'Invite',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          NavigationDestination(
+            icon: Icon(Icons.history_outlined),
+            selectedIcon: Icon(Icons.history),
+            label: 'History',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
         ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
       ),
     );
   }
@@ -87,48 +98,116 @@ class HomeTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ElevatedButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => const DailyRewardModal(),
-                );
-              },
-              child: const Text('Claim Daily Reward'),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Daily Reward',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Claim your daily bonus!',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ],
+                    ),
+                    FilledButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => const DailyRewardModal(),
+                        );
+                      },
+                      icon: const Icon(Icons.card_giftcard),
+                      label: const Text('Claim'),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 20),
-            const Text(
+            const SizedBox(height: 32),
+            Text(
               'Earning Methods',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 10),
-            ListTile(
-              leading: const Icon(Icons.movie),
-              title: const Text('Watch Ads'),
-              onTap: () {
-                Navigator.pushNamed(context, WatchAdsScreen.routeName);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.casino),
-              title: const Text('Spin & Win'),
-              onTap: () {
-                Navigator.pushNamed(context, SpinAndWinScreen.routeName);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.gamepad),
-              title: const Text('Tic-Tac-Toe'),
-              onTap: () {
-                Navigator.pushNamed(context, TicTacToeScreen.routeName);
-              },
+            const SizedBox(height: 16),
+            Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: Icon(
+                      Icons.movie_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: Text(
+                      'Watch Ads',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    subtitle: const Text('Earn coins by watching video ads'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.pushNamed(context, WatchAdsScreen.routeName);
+                    },
+                  ),
+                  Divider(color: Theme.of(context).colorScheme.outlineVariant),
+                  ListTile(
+                    leading: Icon(
+                      Icons.casino_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: Text(
+                      'Spin & Win',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    subtitle: const Text('Try your luck on the wheel'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.pushNamed(context, SpinAndWinScreen.routeName);
+                    },
+                  ),
+                  Divider(color: Theme.of(context).colorScheme.outlineVariant),
+                  ListTile(
+                    leading: Icon(
+                      Icons.gamepad_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: Text(
+                      'Tic-Tac-Toe',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    subtitle: const Text('Play and earn coins'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.pushNamed(context, TicTacToeScreen.routeName);
+                    },
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
+            const SizedBox(height: 32),
+            FilledButton.icon(
               onPressed: () {
                 Navigator.pushNamed(context, WithdrawScreen.routeName);
               },
-              child: const Text('Withdraw'),
+              icon: const Icon(Icons.account_balance_wallet_outlined),
+              label: const Text('Withdraw Earnings'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 56),
+              ),
             ),
           ],
         ),

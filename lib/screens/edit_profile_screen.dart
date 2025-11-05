@@ -68,34 +68,50 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         title: 'Edit Profile',
         onBack: () => Navigator.of(context).pop(),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _displayNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Display Name',
-                  border: OutlineInputBorder(),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Personal Information',
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a display name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              if (_isLoading)
-                const CircularProgressIndicator()
-              else
-                ElevatedButton(
-                  onPressed: _updateProfile,
-                  child: const Text('Save Changes'),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _displayNameController,
+                  decoration: InputDecoration(
+                    labelText: 'Display Name',
+                    prefixIcon: Icon(
+                      Icons.person_outline,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    helperText: 'This is how other users will see you',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a display name';
+                    }
+                    return null;
+                  },
                 ),
-            ],
+                const SizedBox(height: 32),
+                if (_isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  FilledButton.icon(
+                    onPressed: _updateProfile,
+                    icon: const Icon(Icons.save_outlined),
+                    label: const Text('Save Changes'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 56),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

@@ -16,17 +16,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     {
       "image": "assets/onboarding1.png", // Placeholder
       "title": "Earn Coins by Engaging",
-      "description": "Watch ads, spin the wheel, play games, and claim daily rewards to earn virtual coins.",
+      "description":
+          "Watch ads, spin the wheel, play games, and claim daily rewards to earn virtual coins.",
     },
     {
       "image": "assets/onboarding2.png", // Placeholder
       "title": "Invite Friends, Earn More",
-      "description": "Share your referral code and earn bonus coins when your friends join and become active.",
+      "description":
+          "Share your referral code and earn bonus coins when your friends join and become active.",
     },
     {
       "image": "assets/onboarding3.png", // Placeholder
       "title": "Withdraw Your Earnings",
-      "description": "Convert your virtual coins into real money and withdraw directly to your UPI or bank account.",
+      "description":
+          "Convert your virtual coins into real money and withdraw directly to your UPI or bank account.",
     },
   ];
 
@@ -66,37 +69,49 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  _currentPage == onboardingData.length - 1
-                      ? ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(builder: (context) => const AuthScreen()),
-                            );
-                          },
-                          child: const Text("Get Started"),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(builder: (context) => const AuthScreen()),
-                                );
-                              },
-                              child: const Text("Skip"),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: _currentPage == onboardingData.length - 1
+                        ? FilledButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                  builder: (context) => const AuthScreen(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.arrow_forward),
+                            label: const Text("Get Started"),
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 56),
                             ),
-                            ElevatedButton(
-                              onPressed: () {
-                                _pageController.nextPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.ease,
-                                );
-                              },
-                              child: const Text("Next"),
-                            ),
-                          ],
-                        ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (context) => const AuthScreen(),
+                                    ),
+                                  );
+                                },
+                                child: const Text("Skip"),
+                              ),
+                              FilledButton.icon(
+                                onPressed: () {
+                                  _pageController.nextPage(
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeInOut,
+                                  );
+                                },
+                                icon: const Icon(Icons.arrow_forward),
+                                label: const Text("Next"),
+                              ),
+                            ],
+                          ),
+                  ),
                 ],
               ),
             ),
@@ -108,12 +123,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Container buildDot(int index, BuildContext context) {
     return Container(
-      height: 10,
-      width: _currentPage == index ? 20 : 10,
-      margin: const EdgeInsets.only(right: 5),
+      height: 8,
+      width: _currentPage == index ? 24 : 8,
+      margin: const EdgeInsets.only(right: 6),
       decoration: BoxDecoration(
-        color: _currentPage == index ? Theme.of(context).primaryColor : Colors.grey,
-        borderRadius: BorderRadius.circular(20),
+        color: _currentPage == index
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(4),
       ),
     );
   }
@@ -133,26 +150,34 @@ class OnboardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Image.asset(image, height: 200), // Placeholder for image
-        const SizedBox(height: 40),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40.0),
-          child: Text(
-            description,
-            style: const TextStyle(fontSize: 16),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(
+            image,
+            height: MediaQuery.of(context).size.height * 0.3,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(height: 48),
+          Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
-        ),
-      ],
+          const SizedBox(height: 16),
+          Text(
+            description,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }

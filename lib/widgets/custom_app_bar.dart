@@ -18,15 +18,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.blue.shade700,
-      foregroundColor: Colors.white,
+      scrolledUnderElevation: 0,
       leading: onBack != null
-          ? IconButton(
-              icon: const Icon(Icons.arrow_back_ios),
-              onPressed: onBack,
-            )
+          ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: onBack)
           : null,
-      title: Text(title),
+      title: Text(title, style: Theme.of(context).textTheme.titleLarge),
       actions: actions,
     );
   }

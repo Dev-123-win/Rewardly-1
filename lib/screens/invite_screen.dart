@@ -20,38 +20,109 @@ class InviteScreen extends StatelessWidget {
         onBack: () => Navigator.of(context).pop(),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Your Referral Code:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.card_giftcard,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Your Referral Code',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.secondaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: SelectableText(
+                        referralCode,
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSecondaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton.tonalIcon(
+                      onPressed: () {
+                        Share.share(
+                          'Join our app and get 200 bonus coins! Use my referral code: $referralCode',
+                        );
+                      },
+                      icon: const Icon(Icons.share),
+                      label: const Text('Share Code'),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 56),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 10),
-            SelectableText(
-              referralCode,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                'Referred Users',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                Share.share(
-                  'Join our app and get 200 bonus coins! Use my referral code: $referralCode',
-                );
-              },
-              icon: const Icon(Icons.share),
-              label: const Text('Share Code'),
-            ),
-            const SizedBox(height: 30),
-            const Text(
-              'Referred Users:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Expanded(
               child: userProvider.referredUsers.isEmpty
-                  ? const Text('You haven\'t referred anyone yet.')
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.people_outline,
+                            size: 48,
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No referrals yet',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Share your code to start earning rewards',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
+                    )
                   : ListView.builder(
                       itemCount: userProvider.referredUsers.length,
                       itemBuilder: (context, index) {
@@ -61,17 +132,64 @@ class InviteScreen extends StatelessWidget {
                         final bool rewarded =
                             referredUser['referrerRewarded'] ?? false;
 
-                        return ListTile(
-                          title: Text(
-                            referredUser['refereeId'] ?? 'Unknown User',
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
                           ),
-                          subtitle: Text('Active Days: $activeDays / 3'),
-                          trailing: rewarded
-                              ? const Text(
-                                  'Rewarded',
-                                  style: TextStyle(color: Colors.green),
-                                )
-                              : const Text('Pending'),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.secondaryContainer,
+                              child: Text(
+                                (referredUser['refereeId'] ?? 'U')[0]
+                                    .toUpperCase(),
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSecondaryContainer,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              referredUser['refereeId'] ?? 'Unknown User',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            subtitle: Text(
+                              'Active Days: $activeDays / 3',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: rewarded
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.primaryContainer
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.surfaceContainer,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                rewarded ? 'Rewarded' : 'Pending',
+                                style: Theme.of(context).textTheme.labelMedium
+                                    ?.copyWith(
+                                      color: rewarded
+                                          ? Theme.of(
+                                              context,
+                                            ).colorScheme.onPrimaryContainer
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                            ),
+                          ),
                         );
                       },
                     ),

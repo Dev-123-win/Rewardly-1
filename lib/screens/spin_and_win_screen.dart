@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:iconsax/iconsax.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
@@ -85,11 +86,18 @@ class _SpinAndWinScreenState extends State<SpinAndWinScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Congratulations!'),
-          content: Text('You won $earnedCoins coins!'),
+          icon: const Icon(Iconsax.medal_star),
+          title: Text(
+            'Congratulations!',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          content: Text(
+            'You won $earnedCoins coins!',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
           actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
+            FilledButton(
+              child: const Text('Collect'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -139,23 +147,28 @@ class _SpinAndWinScreenState extends State<SpinAndWinScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade100,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.refresh, color: Colors.orange.shade800),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Spins Remaining Today: ${dailySpinLimit - spinsUsed} / $dailySpinLimit\nResets at midnight',
-                      style: TextStyle(color: Colors.orange.shade800),
+            Card(
+              elevation: 0,
+              color: Theme.of(context).colorScheme.secondaryContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(
+                      Iconsax.refresh,
+                      color: Theme.of(context).colorScheme.secondary,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Spins Remaining Today: ${dailySpinLimit - spinsUsed} / $dailySpinLimit\nResets at midnight',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 30),
@@ -172,16 +185,17 @@ class _SpinAndWinScreenState extends State<SpinAndWinScreen> {
                       _isSpinning = false;
                     });
                     final int earnedCoins = _spinRewards[_currentSpinIndex];
+                    final adProvider = Provider.of<AdProvider>(
+                      context,
+                      listen: false,
+                    );
                     await Provider.of<UserProvider>(
                       context,
                       listen: false,
                     ).spinAndEarnCoins(earnedCoins, dailySpinLimit);
                     if (!mounted) return;
                     _showRewardDialog(earnedCoins);
-                    Provider.of<AdProvider>(
-                      context,
-                      listen: false,
-                    ).loadRewardedAd();
+                    adProvider.loadRewardedAd();
                   },
                   indicators: const <FortuneIndicator>[
                     FortuneIndicator(

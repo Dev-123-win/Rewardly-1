@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:convert'; // For JSON encoding/decoding
-import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-// Import for RewardItem
-import '../main.dart'; // Import the global sharedPreferences
-import 'config_provider.dart'; // Import ConfigProvider
+import 'package:shared_preferences/shared_preferences.dart';
+import 'config_provider.dart';
 
 // Define a simple User model to encapsulate user data
 class AppUser {
@@ -97,8 +96,15 @@ class UserProvider with ChangeNotifier {
   Timer? _syncTimer; // Timer for scheduled syncs
   final ConfigProvider? configProvider;
 
+  late SharedPreferences sharedPreferences;
+
   UserProvider({this.configProvider}) {
-    _loadLocalData(); // Load local data on startup
+    _initSharedPrefs();
+  }
+
+  Future<void> _initSharedPrefs() async {
+    sharedPreferences = await SharedPreferences.getInstance();
+    await _loadLocalData(); // Load local data on startup
     _startScheduledSync(); // Start the periodic sync
   }
 
