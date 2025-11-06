@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../providers/config_provider.dart';
-import '../widgets/custom_app_bar.dart'; // Import CustomAppBar
+import '../widgets/custom_app_bar.dart';
+import '../core/utils/responsive_utils.dart';
 
 class WithdrawScreen extends StatefulWidget {
   static const String routeName = '/withdraw';
@@ -105,135 +106,283 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       defaultValue: 10000,
     );
 
+    final isDesktop = ResponsiveUtils.isDesktop(context);
+    final isTablet = ResponsiveUtils.isTablet(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxWidth = isDesktop
+        ? 800.0
+        : isTablet
+        ? 600.0
+        : screenWidth;
+
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Withdraw Coins',
         onBack: () => Navigator.of(context).pop(),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Your coin balance: $coinBalance'),
-              Text('Minimum withdrawal: $minWithdrawalCoins coins'),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _amountController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Amount to withdraw',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter an amount';
-                  }
-                  final int? amount = int.tryParse(value);
-                  if (amount == null) {
-                    return 'Please enter a valid number';
-                  }
-                  if (amount < minWithdrawalCoins) {
-                    return 'Amount must be at least $minWithdrawalCoins';
-                  }
-                  if (amount > coinBalance) {
-                    return 'Insufficient balance';
-                  }
-                  return null;
-                },
+      body: Form(
+        key: _formKey,
+        child: Center(
+          child: Container(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(isDesktop ? 32.0 : 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(isDesktop ? 24.0 : 16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Current Balance',
+                            style: isDesktop
+                                ? Theme.of(context).textTheme.headlineSmall
+                                : Theme.of(context).textTheme.titleLarge,
+                          ),
+                          SizedBox(height: isDesktop ? 16 : 8),
+                          Text(
+                            '$coinBalance coins',
+                            style:
+                                (isDesktop
+                                        ? Theme.of(
+                                            context,
+                                          ).textTheme.headlineLarge
+                                        : Theme.of(
+                                            context,
+                                          ).textTheme.headlineSmall)
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                          ),
+                          SizedBox(height: isDesktop ? 16 : 8),
+                          Text(
+                            'Minimum withdrawal: $minWithdrawalCoins coins',
+                            style: isDesktop
+                                ? Theme.of(context).textTheme.titleMedium
+                                : Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: isDesktop ? 32 : 20),
+                  TextFormField(
+                    controller: _amountController,
+                    keyboardType: TextInputType.number,
+                    style: isDesktop
+                        ? Theme.of(context).textTheme.titleMedium
+                        : Theme.of(context).textTheme.bodyLarge,
+                    decoration: InputDecoration(
+                      labelText: 'Amount to withdraw',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(isDesktop ? 12 : 8),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: isDesktop ? 24 : 16,
+                        vertical: isDesktop ? 20 : 16,
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter an amount';
+                      }
+                      final int? amount = int.tryParse(value);
+                      if (amount == null) {
+                        return 'Please enter a valid number';
+                      }
+                      if (amount < minWithdrawalCoins) {
+                        return 'Amount must be at least $minWithdrawalCoins';
+                      }
+                      if (amount > coinBalance) {
+                        return 'Insufficient balance';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: isDesktop ? 32 : 20),
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedMethod,
+                    items: ['UPI', 'Bank Transfer'].map((String method) {
+                      return DropdownMenuItem<String>(
+                        value: method,
+                        child: Text(
+                          method,
+                          style: isDesktop
+                              ? Theme.of(context).textTheme.titleMedium
+                              : Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedMethod = newValue!;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Withdrawal Method',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(isDesktop ? 12 : 8),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: isDesktop ? 24 : 16,
+                        vertical: isDesktop ? 20 : 16,
+                      ),
+                    ),
+                    style: isDesktop
+                        ? Theme.of(context).textTheme.titleMedium
+                        : Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 20),
+                  if (_selectedMethod == 'UPI') ...[
+                    SizedBox(height: isDesktop ? 32 : 20),
+                    TextFormField(
+                      controller: _upiController,
+                      style: isDesktop
+                          ? Theme.of(context).textTheme.titleMedium
+                          : Theme.of(context).textTheme.bodyLarge,
+                      decoration: InputDecoration(
+                        labelText: 'UPI ID',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                            isDesktop ? 12 : 8,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: isDesktop ? 24 : 16,
+                          vertical: isDesktop ? 20 : 16,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (_selectedMethod == 'UPI' &&
+                            (value == null || value.isEmpty)) {
+                          return 'Please enter your UPI ID';
+                        }
+                        return null;
+                      },
+                    ),
+                  ] else ...[
+                    SizedBox(height: isDesktop ? 32 : 20),
+                    TextFormField(
+                      controller: _accountNumberController,
+                      style: isDesktop
+                          ? Theme.of(context).textTheme.titleMedium
+                          : Theme.of(context).textTheme.bodyLarge,
+                      decoration: InputDecoration(
+                        labelText: 'Bank Account Number',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                            isDesktop ? 12 : 8,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: isDesktop ? 24 : 16,
+                          vertical: isDesktop ? 20 : 16,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (_selectedMethod == 'Bank Transfer' &&
+                            (value == null || value.isEmpty)) {
+                          return 'Please enter your account number';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: isDesktop ? 32 : 20),
+                    TextFormField(
+                      controller: _ifscController,
+                      style: isDesktop
+                          ? Theme.of(context).textTheme.titleMedium
+                          : Theme.of(context).textTheme.bodyLarge,
+                      decoration: InputDecoration(
+                        labelText: 'IFSC Code',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                            isDesktop ? 12 : 8,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: isDesktop ? 24 : 16,
+                          vertical: isDesktop ? 20 : 16,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (_selectedMethod == 'Bank Transfer' &&
+                            (value == null || value.isEmpty)) {
+                          return 'Please enter the IFSC code';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: isDesktop ? 32 : 20),
+                    TextFormField(
+                      controller: _nameController,
+                      style: isDesktop
+                          ? Theme.of(context).textTheme.titleMedium
+                          : Theme.of(context).textTheme.bodyLarge,
+                      decoration: InputDecoration(
+                        labelText: 'Account Holder Name',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                            isDesktop ? 12 : 8,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: isDesktop ? 24 : 16,
+                          vertical: isDesktop ? 20 : 16,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (_selectedMethod == 'Bank Transfer' &&
+                            (value == null || value.isEmpty)) {
+                          return 'Please enter the account holder name';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  SizedBox(height: isDesktop ? 48 : 32),
+                  Center(
+                    child: SizedBox(
+                      width: isDesktop ? 300 : double.infinity,
+                      child: _isLoading
+                          ? Center(
+                              child: SizedBox(
+                                width: isDesktop ? 32 : 24,
+                                height: isDesktop ? 32 : 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: isDesktop ? 3 : 2,
+                                ),
+                              ),
+                            )
+                          : FilledButton.icon(
+                              onPressed: _requestWithdrawal,
+                              icon: Icon(
+                                Icons.account_balance_wallet_outlined,
+                                size: isDesktop ? 24 : 20,
+                              ),
+                              label: Text(
+                                'Submit Request',
+                                style: TextStyle(fontSize: isDesktop ? 18 : 16),
+                              ),
+                              style: FilledButton.styleFrom(
+                                minimumSize: Size(
+                                  double.infinity,
+                                  isDesktop ? 64 : 56,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedMethod,
-                items: ['UPI', 'Bank Transfer'].map((String method) {
-                  return DropdownMenuItem<String>(
-                    value: method,
-                    child: Text(method),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedMethod = newValue!;
-                  });
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Withdrawal Method',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              if (_selectedMethod == 'UPI')
-                TextFormField(
-                  controller: _upiController,
-                  decoration: const InputDecoration(
-                    labelText: 'UPI ID',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (_selectedMethod == 'UPI' &&
-                        (value == null || value.isEmpty)) {
-                      return 'Please enter your UPI ID';
-                    }
-                    return null;
-                  },
-                )
-              else ...[
-                TextFormField(
-                  controller: _accountNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Bank Account Number',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (_selectedMethod == 'Bank Transfer' &&
-                        (value == null || value.isEmpty)) {
-                      return 'Please enter your account number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _ifscController,
-                  decoration: const InputDecoration(
-                    labelText: 'IFSC Code',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (_selectedMethod == 'Bank Transfer' &&
-                        (value == null || value.isEmpty)) {
-                      return 'Please enter the IFSC code';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Account Holder Name',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (_selectedMethod == 'Bank Transfer' &&
-                        (value == null || value.isEmpty)) {
-                      return 'Please enter the account holder name';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-              const SizedBox(height: 20),
-              if (_isLoading)
-                const Center(child: CircularProgressIndicator())
-              else
-                ElevatedButton(
-                  onPressed: _requestWithdrawal,
-                  child: const Text('Submit Request'),
-                ),
-            ],
+            ),
           ),
         ),
       ),

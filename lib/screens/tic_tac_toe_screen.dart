@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/ad_provider.dart';
 import '../providers/user_provider.dart';
 import '../providers/config_provider.dart';
@@ -35,13 +37,19 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
   }
 
   Future<void> _loadGameStats() async {
-    // In a real app, load from userProvider or local storage
-    // For now, using mock data
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final todayStats = userProvider.currentUser?.dailyStats[today] ?? {};
+    final todayGames = todayStats['tictactoeGames'] ?? 0;
+
     setState(() {
-      xScore = 5; // Mock
-      oScore = 3; // Mock
-      totalGames = 127; // Mock
-      winStreak = 12; // Mock
+      totalGames = todayGames;
+      xScore = todayStats['tictactoeWins'] ?? 0;
+      oScore = todayStats['tictatoeLosses'] ?? 0;
+      winStreak = todayStats['tictactoeStreak'] ?? 0;
     });
   }
 
@@ -178,25 +186,55 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
   }
 
   void _setWinner(String result) async {
+    final provider = Provider.of<UserProvider>(context, listen: false);
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    Map<String, dynamic> todayStats = Map<String, dynamic>.from(
+      provider.currentUser?.dailyStats[today] ?? {},
+    );
+
+    int currentWins = todayStats['tictactoeWins'] ?? 0;
+    int currentLosses = todayStats['tictatoeLosses'] ?? 0;
+    int currentStreak = todayStats['tictactoeStreak'] ?? 0;
+    int currentGames = todayStats['tictactoeGames'] ?? 0;
+
     setState(() {
       winner = result;
       _isGameOver = true;
-      totalGames++;
     });
 
     if (result == 'X') {
-      xScore++;
-      winStreak++;
+      currentWins++;
+      currentStreak++;
+      todayStats['tictactoeWins'] = currentWins;
+      todayStats['tictactoeStreak'] = currentStreak;
+      setState(() {
+        xScore = currentWins;
+        winStreak = currentStreak;
+        totalGames = currentGames + 1;
+      });
     } else if (result == 'O') {
-      oScore++;
-      winStreak = 0; // Reset streak for AI win
+      currentLosses++;
+      currentStreak = 0;
+      todayStats['tictatoeLosses'] = currentLosses;
+      todayStats['tictactoeStreak'] = currentStreak;
+      setState(() {
+        oScore = currentLosses;
+        winStreak = 0;
+        totalGames = currentGames + 1;
+      });
     } else {
-      winStreak = 0; // Reset streak for draw
+      currentStreak = 0;
+      todayStats['tictactoeStreak'] = currentStreak;
+      setState(() {
+        winStreak = 0;
+        totalGames = currentGames + 1;
+      });
     }
+
+    todayStats['tictactoeGames'] = currentGames + 1;
 
     // Show rewarded ad to claim coins
     final adProvider = Provider.of<AdProvider>(context, listen: false);
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
     final configProvider = Provider.of<ConfigProvider>(context, listen: false);
     final int tictactoeReward =
         configProvider.appConfig['rewards']?['tictactoeReward'] ?? 4;
@@ -204,7 +242,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     if (adProvider.rewardedAd != null) {
       adProvider.showRewardedAd(
         onAdEarned: (reward) async {
-          await userProvider.playTicTacToeAndEarnCoins(tictactoeReward);
+          await provider.playTicTacToeAndEarnCoins(tictactoeReward);
           if (!mounted) return;
           // Optionally show a toast/snackbar for coins earned
           ScaffoldMessenger.of(context).showSnackBar(
@@ -234,7 +272,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
         onBack: () => Navigator.of(context).pop(),
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline),
+            icon: const Icon(Iconsax.info_circle),
             onPressed: () {
               // TODO: Show game rules/info
             },

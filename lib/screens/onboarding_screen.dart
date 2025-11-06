@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'auth_screen.dart'; // We will create this later
+import 'package:iconsax/iconsax.dart';
+import '../core/utils/responsive_utils.dart';
+import 'auth_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -35,61 +37,62 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveUtils.isDesktop(context);
+    final isTablet = ResponsiveUtils.isTablet(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxWidth = isDesktop
+        ? 1200.0
+        : isTablet
+        ? 800.0
+        : screenWidth;
+
     return Scaffold(
-      body: Stack(
-        children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: onboardingData.length,
-            onPageChanged: (int page) {
-              setState(() {
-                _currentPage = page;
-              });
-            },
-            itemBuilder: (context, index) {
-              return OnboardingPage(
-                image: onboardingData[index]["image"]!,
-                title: onboardingData[index]["title"]!,
-                description: onboardingData[index]["description"]!,
-              );
-            },
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 40.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      onboardingData.length,
-                      (index) => buildDot(index, context),
-                    ),
+      body: Center(
+        child: Container(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: Stack(
+            children: <Widget>[
+              PageView.builder(
+                controller: _pageController,
+                itemCount: onboardingData.length,
+                onPageChanged: (int page) {
+                  setState(() {
+                    _currentPage = page;
+                  });
+                },
+                itemBuilder: (context, index) {
+                  return OnboardingPage(
+                    image: onboardingData[index]["image"]!,
+                    title: onboardingData[index]["title"]!,
+                    description: onboardingData[index]["description"]!,
+                  );
+                },
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: ResponsiveUtils.isDesktop(context) ? 60.0 : 40.0,
+                    left: ResponsiveUtils.getResponsivePadding(context).left,
+                    right: ResponsiveUtils.getResponsivePadding(context).right,
                   ),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: _currentPage == onboardingData.length - 1
-                        ? FilledButton.icon(
-                            onPressed: () {
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                  builder: (context) => const AuthScreen(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.arrow_forward),
-                            label: const Text("Get Started"),
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 56),
-                            ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              TextButton(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          onboardingData.length,
+                          (index) => buildDot(index, context),
+                        ),
+                      ),
+                      SizedBox(height: isDesktop ? 32 : 20),
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isDesktop ? 32 : 24,
+                        ),
+                        child: _currentPage == onboardingData.length - 1
+                            ? FilledButton.icon(
                                 onPressed: () {
                                   Navigator.of(context).pushReplacement(
                                     MaterialPageRoute(
@@ -97,40 +100,69 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     ),
                                   );
                                 },
-                                child: const Text("Skip"),
+                                icon: const Icon(Iconsax.arrow_right_3),
+                                label: const Text("Get Started"),
+                                style: FilledButton.styleFrom(
+                                  minimumSize: Size(
+                                    isDesktop ? 300 : double.infinity,
+                                    isDesktop ? 64 : 56,
+                                  ),
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pushReplacement(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const AuthScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text("Skip"),
+                                  ),
+                                  FilledButton.icon(
+                                    onPressed: () {
+                                      _pageController.nextPage(
+                                        duration: const Duration(
+                                          milliseconds: 300,
+                                        ),
+                                        curve: Curves.easeInOut,
+                                      );
+                                    },
+                                    icon: const Icon(Iconsax.arrow_right_3),
+                                    label: const Text("Next"),
+                                  ),
+                                ],
                               ),
-                              FilledButton.icon(
-                                onPressed: () {
-                                  _pageController.nextPage(
-                                    duration: const Duration(milliseconds: 300),
-                                    curve: Curves.easeInOut,
-                                  );
-                                },
-                                icon: const Icon(Icons.arrow_forward),
-                                label: const Text("Next"),
-                              ),
-                            ],
-                          ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Container buildDot(int index, BuildContext context) {
+    final isDesktop = ResponsiveUtils.isDesktop(context);
     return Container(
-      height: 8,
-      width: _currentPage == index ? 24 : 8,
-      margin: const EdgeInsets.only(right: 6),
+      height: isDesktop ? 10 : 8,
+      width: _currentPage == index
+          ? (isDesktop ? 30 : 24)
+          : (isDesktop ? 10 : 8),
+      margin: EdgeInsets.only(right: isDesktop ? 8 : 6),
       decoration: BoxDecoration(
         color: _currentPage == index
             ? Theme.of(context).colorScheme.primary
             : Theme.of(context).colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(isDesktop ? 5 : 4),
       ),
     );
   }
@@ -150,31 +182,54 @@ class OnboardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = ResponsiveUtils.isDesktop(context);
+    final isTablet = ResponsiveUtils.isTablet(context);
+    final padding = ResponsiveUtils.getResponsivePadding(context);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      padding: padding,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Image.asset(
             image,
-            height: MediaQuery.of(context).size.height * 0.3,
+            height:
+                MediaQuery.of(context).size.height *
+                (isDesktop
+                    ? 0.4
+                    : isTablet
+                    ? 0.35
+                    : 0.3),
             fit: BoxFit.contain,
           ),
-          const SizedBox(height: 48),
+          SizedBox(height: isDesktop ? 64 : 48),
           Text(
             title,
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            description,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: isDesktop
+                  ? 32
+                  : isTablet
+                  ? 28
+                  : null,
             ),
             textAlign: TextAlign.center,
+          ),
+          SizedBox(height: isDesktop ? 24 : 16),
+          SizedBox(
+            width: isDesktop
+                ? 600
+                : isTablet
+                ? 500
+                : double.infinity,
+            child: Text(
+              description,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: isDesktop ? 18 : null,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),

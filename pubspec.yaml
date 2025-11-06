@@ -77,6 +77,12 @@ flutter:
     - assets/onboarding1.png
     - assets/onboarding2.png
     - assets/onboarding3.png
+    - assets/games/whack_a_mole/
+    
+  fonts:
+    - family: WhackAMole
+      fonts:
+        - asset: assets/games/whack_a_mole/font.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

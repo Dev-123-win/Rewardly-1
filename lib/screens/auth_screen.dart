@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:iconsax/iconsax.dart';
 import '../providers/auth_provider.dart' as my_auth_provider;
 import 'home_screen.dart';
 
@@ -151,7 +152,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.lock_outline,
+                    Iconsax.lock,
                     size: 40,
                     color: Theme.of(context).colorScheme.primary,
                   ),
@@ -173,7 +174,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 const SizedBox(height: 40),
                 if (_isLogin)
                   ElevatedButton.icon(
-                    icon: Image.asset('assets/google_logo.png', height: 24),
+                    icon: Icon(Iconsax.chrome),
                     label: const Text(
                       'Sign in with Google',
                       style: TextStyle(fontSize: 16),
@@ -216,7 +217,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   decoration: InputDecoration(
                     labelText: 'Email address',
                     prefixIcon: Icon(
-                      Icons.email_outlined,
+                      Iconsax.sms,
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     border: const OutlineInputBorder(),
@@ -249,7 +250,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     controller: _referralController,
                     decoration: InputDecoration(
                       labelText: 'Referral Code (Optional)',
-                      prefixIcon: const Icon(Icons.card_giftcard),
+                      prefixIcon: const Icon(Iconsax.gift),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
@@ -264,12 +265,10 @@ class _AuthScreenState extends State<AuthScreen> {
                   obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(Iconsax.password_check),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                        _isPasswordVisible ? Iconsax.eye : Iconsax.eye_slash,
                       ),
                       onPressed: () {
                         setState(() {

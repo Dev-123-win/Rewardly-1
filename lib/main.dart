@@ -55,7 +55,7 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.white, // white background
-      statusBarIconBrightness: Brightness.light, // white icons (invisible)
+      statusBarIconBrightness: Brightness.dark, // white icons (invisible)
       statusBarBrightness: Brightness.light, // iOS
     ),
   );
