@@ -16,7 +16,7 @@ class WhackAMoleScreen extends StatelessWidget {
 }
 
 class _WhackAMoleScreenContent extends StatelessWidget {
-  const _WhackAMoleScreenContent({super.key});
+  const _WhackAMoleScreenContent();
 
   @override
   Widget build(BuildContext context) {
@@ -192,7 +192,7 @@ class _WhackAMoleScreenContent extends StatelessWidget {
 }
 
 class _MoleView extends StatelessWidget {
-  const _MoleView({super.key, required this.mole, required this.onTap});
+  const _MoleView({required this.mole, required this.onTap});
 
   final MoleModel mole;
   final VoidCallback onTap;
