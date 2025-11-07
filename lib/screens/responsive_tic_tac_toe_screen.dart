@@ -42,8 +42,8 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
   void _loadGameStats() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     setState(() {
-      totalGames = userProvider.currentUser?.dailyStats['tictactoeGames'] ?? 0;
-      winStreak = userProvider.currentUser?.todayStats['winStreak'] ?? 0;
+      totalGames = userProvider.getTodayStats()?['tictactoeGames'] ?? 0;
+      winStreak = userProvider.getTodayStats()?['winStreak'] ?? 0;
     });
   }
 

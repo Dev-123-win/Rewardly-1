@@ -21,34 +21,8 @@ class UserProvider with ChangeNotifier {
   int _localWritesCount = 0;
   int _localReadsCount = 0;
   String _lastSyncDate = '';
+
   User? get currentUser => _currentUser;
-  String? get referralCode => _currentUser?.referralCode;
-  SharedPreferences get sharedPreferences => _prefs;
-
-  List<Map<String, dynamic>> get referredUsers {
-    final user = auth.FirebaseAuth.instance.currentUser;
-    if (user == null) return [];
-
-    final referralsKey = 'referrals_${user.uid}';
-    final String? referralsJson = _prefs.getString(referralsKey);
-    if (referralsJson == null) return [];
-
-    try {
-      return List<Map<String, dynamic>>.from(json.decode(referralsJson));
-    } catch (e) {
-      return [];
-    }
-  }
-
-  Map<String, dynamic> get todayStats {
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    return _currentUser?.dailyStats[today] ?? {};
-  }
-
-  Map<String, dynamic>? getTodayStats() {
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    return _currentUser?.dailyStats[today];
-  }
 
   UserProvider({this.configProvider}) {
     _initPrefs();
@@ -83,12 +57,6 @@ class UserProvider with ChangeNotifier {
         json.encode(_currentUser!.toJson()),
       );
     }
-  }
-
-  Future<void> saveNewUser(User user) async {
-    _currentUser = user;
-    await saveCurrentUser();
-    notifyListeners();
   }
 
   Future<void> saveWithdrawalInfo(Map<String, dynamic> withdrawalInfo) async {
@@ -454,40 +422,6 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> spinAndEarnCoins(int amount, int dailySpinLimit) async {
-    await recordGameReward(
-      gameType: 'spin',
-      amount: amount,
-      dailyLimit: dailySpinLimit,
-    );
-  }
-
-  Future<void> playTicTacToeAndEarnCoins(int amount) async {
-    await recordGameReward(gameType: 'tictactoe', amount: amount);
-  }
-
-  Future<void> recordAdWatch(int adRewardAmount) async {
-    final user = auth.FirebaseAuth.instance.currentUser;
-    if (user == null || _currentUser == null) return;
-
-    final today = DateTime.now();
-    final todayString = today.toIso8601String().substring(0, 10);
-    final todayStats = _currentUser!.dailyStats[todayString] ?? {};
-    final adsWatchedToday = todayStats['adsWatched'] ?? 0;
-    final dailyAdLimit =
-        configProvider?.getConfig('dailyAdLimit', defaultValue: 10) ?? 10;
-
-    if (adsWatchedToday >= dailyAdLimit) {
-      throw Exception("Daily ad watch limit reached.");
-    }
-
-    await recordGameReward(
-      gameType: 'ad',
-      amount: adRewardAmount,
-      dailyLimit: dailyAdLimit,
-    );
-  }
-
   Future<void> requestWithdrawal({
     required int amount,
     required String method,
@@ -527,5 +461,47 @@ class UserProvider with ChangeNotifier {
     );
 
     notifyListeners();
+  }
+
+  Future<void> runDailyReconciliation() async {
+    final user = auth.FirebaseAuth.instance.currentUser;
+    if (user == null || _currentUser == null) return;
+
+    final String userId = user.uid;
+    final int localCoins = _currentUser!.coins;
+    final int localTotalWithdrawn = _currentUser!.totalWithdrawn;
+
+    // Get transactions from local storage
+    final transactions = _transactionRepo?.getTransactions(
+      userId: userId,
+    );
+    if (transactions == null) return;
+
+    // Calculate balance from transactions
+    int calculatedCoins = 0;
+    int calculatedWithdrawn = 0;
+
+    for (var transaction in transactions) {
+      final int amount = transaction['amount'] ?? 0;
+      final String type = transaction['type'] ?? '';
+
+      if (type == 'earning') {
+        calculatedCoins += amount;
+      } else if (type == 'withdrawal') {
+        calculatedCoins += amount; // Amount is negative for withdrawals
+        calculatedWithdrawn += -amount;
+      }
+    }
+
+    // Update user data if there's a mismatch
+    if (calculatedCoins != localCoins ||
+        calculatedWithdrawn != localTotalWithdrawn) {
+      _currentUser = _currentUser!.copyWith(
+        coins: calculatedCoins,
+        totalWithdrawn: calculatedWithdrawn,
+      );
+      await saveCurrentUser();
+      notifyListeners();
+    }
   }
 }

@@ -66,10 +66,10 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
         await userProvider.saveWithdrawalInfo(details);
 
         await userProvider.requestWithdrawal(
-          amount,
-          _selectedMethod,
-          details,
-          minWithdrawalCoins,
+          amount: amount,
+          method: _selectedMethod,
+          details: details,
+          minWithdrawalCoins: minWithdrawalCoins,
         );
 
         if (mounted) {
@@ -109,7 +109,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
         ? 600.0
         : screenWidth;
 
-    final int coinBalance = userProvider.currentUser?.coinBalance ?? 0;
+    final int coinBalance = userProvider.currentUser?.coins ?? 0;
     final int minWithdrawalCoins = configProvider.getConfig(
       'minWithdrawalCoins',
       defaultValue: 10000,

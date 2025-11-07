@@ -46,87 +46,280 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               .where((t) => t['type'] == _selectedFilter.toLowerCase())
               .toList();
 
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Transaction History',
         onBack: () => Navigator.of(context).pop(),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: SegmentedButton<String>(
-              segments: ['All', 'Earning', 'Withdrawal'].map((String value) {
-                return ButtonSegment<String>(value: value, label: Text(value));
-              }).toList(),
-              selected: {_selectedFilter},
-              onSelectionChanged: (Set<String> newSelection) {
-                setState(() {
-                  _selectedFilter = newSelection.first;
-                });
+      ),
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.shadow.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SegmentedButton<String>(
+                      segments: ['All', 'Earning', 'Withdrawal'].map((
+                        String value,
+                      ) {
+                        IconData icon;
+                        switch (value) {
+                          case 'All':
+                            icon = Iconsax.clipboard_text;
+                            break;
+                          case 'Earning':
+                            icon = Iconsax.arrow_circle_up;
+                            break;
+                          case 'Withdrawal':
+                            icon = Iconsax.arrow_circle_down;
+                            break;
+                          default:
+                            icon = Iconsax.document;
+                        }
+                        return ButtonSegment<String>(
+                          value: value,
+                          icon: Icon(icon, size: 20),
+                          label: Text(
+                            value,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      selected: {_selectedFilter},
+                      onSelectionChanged: (Set<String> newSelection) {
+                        setState(() {
+                          _selectedFilter = newSelection.first;
+                        });
+                      },
+                      style: ButtonStyle(
+                        backgroundColor:
+                            WidgetStateProperty.resolveWith<Color>((states) {
+                              if (states.contains(WidgetState.selected)) {
+                                return colorScheme.primaryContainer;
+                              }
+                              return colorScheme.surfaceContainerHighest.withOpacity(
+                                0.3,
+                              );
+                            }),
+                        foregroundColor:
+                            WidgetStateProperty.resolveWith<Color>((states) {
+                              if (states.contains(WidgetState.selected)) {
+                                return colorScheme.onPrimaryContainer;
+                              }
+                              return colorScheme.onSurfaceVariant;
+                            }),
+                        side: WidgetStateProperty.resolveWith<BorderSide>((
+                          states,
+                        ) {
+                          if (states.contains(WidgetState.selected)) {
+                            return BorderSide(
+                              color: colorScheme.primary.withOpacity(0.5),
+                            );
+                          }
+                          return BorderSide(
+                            color: colorScheme.outline.withOpacity(0.2),
+                          );
+                        }),
+                        padding: WidgetStateProperty.all(
+                          const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: filteredTransactions.length,
+              itemBuilder: (context, index) {
+                final transaction = filteredTransactions[index];
+                final bool isEarning = transaction['type'] == 'earning';
+                final amount = transaction['amount'];
+                final icon = isEarning
+                    ? Iconsax.money_recive
+                    : Iconsax.money_send;
+                final subType = transaction['subType'].replaceAll('_', ' ');
+
+                return Card(
+                  elevation: 2,
+                  shadowColor: colorScheme.shadow.withOpacity(0.08),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: colorScheme.outlineVariant.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          colorScheme.surface,
+                          colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: isEarning
+                                    ? [
+                                        colorScheme.primaryContainer,
+                                        colorScheme.primary.withOpacity(0.1),
+                                      ]
+                                    : [
+                                        colorScheme.errorContainer,
+                                        colorScheme.error.withOpacity(0.1),
+                                      ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colorScheme.shadow.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              icon,
+                              color: isEarning
+                                  ? colorScheme.primary
+                                  : colorScheme.error,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      subType.toUpperCase(),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            color: colorScheme.onSurface,
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                    const Spacer(),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isEarning
+                                            ? colorScheme.primaryContainer
+                                                  .withOpacity(0.4)
+                                            : colorScheme.errorContainer
+                                                  .withOpacity(0.4),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Iconsax.coin,
+                                            size: 16,
+                                            color: isEarning
+                                                ? colorScheme.primary
+                                                : colorScheme.error,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${isEarning ? '+' : ''}$amount',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.copyWith(
+                                                  color: isEarning
+                                                      ? colorScheme.primary
+                                                      : colorScheme.error,
+                                                  fontFamily: 'Inter',
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Iconsax.calendar,
+                                      size: 14,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      transaction['timestamp'],
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: colorScheme.onSurfaceVariant,
+                                            fontFamily: 'Inter',
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
               },
-              style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.resolveWith<Color>((
-                  Set<WidgetState> states,
-                ) {
-                  if (states.contains(WidgetState.selected)) {
-                    return Theme.of(context).colorScheme.secondaryContainer;
-                  }
-                  return Theme.of(context).colorScheme.surface;
-                }),
-              ),
             ),
           ),
         ],
-      ),
-      body: ListView.builder(
-        itemCount: filteredTransactions.length,
-        itemBuilder: (context, index) {
-          final transaction = filteredTransactions[index];
-          final bool isEarning = transaction['type'] == 'earning';
-          final amount = transaction['amount'];
-          final icon = isEarning ? Iconsax.arrow_up_2 : Iconsax.arrow_down_1;
-
-          return Card(
-            elevation: 0,
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: ListTile(
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isEarning
-                      ? Theme.of(context).colorScheme.primaryContainer
-                      : Theme.of(context).colorScheme.errorContainer,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  icon,
-                  color: isEarning
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.error,
-                ),
-              ),
-              title: Text(
-                transaction['subType'].replaceAll('_', ' ').toUpperCase(),
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              subtitle: Text(
-                transaction['timestamp'],
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-              ),
-              trailing: Text(
-                '${isEarning ? '+' : ''}$amount coins',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: isEarning
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.error,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          );
-        },
       ),
     );
   }

@@ -41,8 +41,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     if (user == null) return;
 
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    final todayStats = userProvider.currentUser?.dailyStats[today] ?? {};
+    final todayStats = userProvider.todayStats;
     final todayGames = todayStats['tictactoeGames'] ?? 0;
 
     setState(() {
@@ -187,9 +186,8 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
 
   void _setWinner(String result) async {
     final provider = Provider.of<UserProvider>(context, listen: false);
-    final today = DateTime.now().toIso8601String().substring(0, 10);
     Map<String, dynamic> todayStats = Map<String, dynamic>.from(
-      provider.currentUser?.dailyStats[today] ?? {},
+      provider.todayStats,
     );
 
     int currentWins = todayStats['tictactoeWins'] ?? 0;
@@ -260,9 +258,59 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     }
   }
 
+  Widget _buildStatItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    bool isHighlighted = false,
+    required BuildContext context,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isHighlighted
+                ? colorScheme.primaryContainer.withOpacity(0.7)
+                : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            color: isHighlighted
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+            size: 20,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            fontFamily: 'Inter',
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: isHighlighted ? colorScheme.primary : colorScheme.onSurface,
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final configProvider = Provider.of<ConfigProvider>(context);
+    final colorScheme = Theme.of(context).colorScheme;
     final int tictactoeReward =
         configProvider.appConfig['rewards']?['tictactoeReward'] ?? 4;
 
@@ -284,77 +332,253 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
         child: Column(
           children: [
             Card(
-              color: Colors.blue.shade700,
+              elevation: 2,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(24),
+                side: BorderSide(
+                  color: colorScheme.outlineVariant.withOpacity(0.2),
+                ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      colorScheme.primaryContainer,
+                      colorScheme.primary.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Column(
-                      children: [
-                        const Text(
-                          'You',
-                          style: TextStyle(color: Colors.white70, fontSize: 16),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          'X',
-                          style: TextStyle(
-                            color: Colors.blue.shade200,
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
+                    // Player X (You)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.shadow.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '$xScore - $oScore',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'You',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: colorScheme.onSurface,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'X',
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
+                                  color: colorScheme.primary,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ],
                       ),
                     ),
+                    // Score
                     Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'AI',
-                          style: TextStyle(color: Colors.white70, fontSize: 16),
-                        ),
-                        const SizedBox(height: 5),
                         Text(
-                          'O',
-                          style: TextStyle(
-                            color: Colors.red.shade200,
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
+                          '$xScore - $oScore',
+                          style: Theme.of(context).textTheme.headlineLarge
+                              ?.copyWith(
+                                color: colorScheme.onPrimaryContainer,
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Game ${totalGames + 1}',
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(
+                                  color: colorScheme.onPrimaryContainer,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
                         ),
                       ],
+                    ),
+                    // Player O (AI)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.errorContainer.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.shadow.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Iconsax.cpu,
+                                size: 16,
+                                color: colorScheme.error,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'AI',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      color: colorScheme.error,
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'O',
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
+                                  color: colorScheme.error,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 20),
-            Text(
-              winner.isNotEmpty
-                  ? (winner == 'Draw' ? 'It\'s a Draw!' : '$winner Wins!')
-                  : (currentPlayer == 'X'
-                        ? 'Your Turn! Tap a cell to play'
-                        : 'AI\'s Turn...'),
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+              decoration: BoxDecoration(
                 color: winner.isNotEmpty
-                    ? (winner == 'X' ? Colors.green : Colors.red)
-                    : Colors.blue.shade700,
+                    ? (winner == 'X'
+                          ? colorScheme.primaryContainer
+                          : winner == 'Draw'
+                          ? colorScheme.surfaceContainerHighest
+                          : colorScheme.errorContainer)
+                    : colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: winner.isNotEmpty
+                      ? (winner == 'X'
+                            ? colorScheme.primary.withOpacity(0.2)
+                            : winner == 'Draw'
+                            ? colorScheme.outline.withOpacity(0.2)
+                            : colorScheme.error.withOpacity(0.2))
+                      : colorScheme.outlineVariant.withOpacity(0.2),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (winner.isEmpty && currentPlayer == 'X')
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Iconsax.arrow_right_1,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                  if (winner.isEmpty && currentPlayer == 'O')
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.errorContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Iconsax.cpu, color: colorScheme.error),
+                    ),
+                  if (winner.isNotEmpty)
+                    Icon(
+                      winner == 'X'
+                          ? Iconsax.medal_star
+                          : winner == 'Draw'
+                          ? Iconsax.refresh
+                          : Iconsax.emoji_sad,
+                      color: winner == 'X'
+                          ? colorScheme.primary
+                          : winner == 'Draw'
+                          ? colorScheme.outline
+                          : colorScheme.error,
+                      size: 24,
+                    ),
+                  const SizedBox(width: 12),
+                  Text(
+                    winner.isNotEmpty
+                        ? (winner == 'Draw'
+                              ? 'It\'s a Draw!'
+                              : winner == 'X'
+                              ? 'You Win!'
+                              : 'AI Wins!')
+                        : (currentPlayer == 'X'
+                              ? 'Your Turn!'
+                              : 'AI is thinking...'),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: winner.isNotEmpty
+                          ? (winner == 'X'
+                                ? colorScheme.primary
+                                : winner == 'Draw'
+                                ? colorScheme.outline
+                                : colorScheme.error)
+                          : colorScheme.onSurface,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 32),
             Expanded(
               child: GridView.builder(
                 shrinkWrap: true,
@@ -362,30 +586,58 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   childAspectRatio: 1,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
                 ),
                 itemCount: 9,
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () => _handleTap(index),
-                    child: Container(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey.shade400),
+                        color: board[index].isEmpty
+                            ? colorScheme.surface
+                            : board[index] == 'X'
+                            ? colorScheme.primaryContainer.withOpacity(0.7)
+                            : colorScheme.errorContainer.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: board[index].isEmpty
+                              ? colorScheme.outlineVariant.withOpacity(0.2)
+                              : board[index] == 'X'
+                              ? colorScheme.primary.withOpacity(0.2)
+                              : colorScheme.error.withOpacity(0.2),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.shadow.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Center(
-                        child: Text(
-                          board[index],
-                          style: TextStyle(
-                            fontSize: 60,
-                            fontWeight: FontWeight.bold,
-                            color: board[index] == 'X'
-                                ? Colors.blue.shade700
-                                : Colors.red.shade700,
-                          ),
-                        ),
+                        child: board[index].isNotEmpty
+                            ? Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  if (board[index] == 'X')
+                                    Icon(
+                                      Iconsax.close_circle,
+                                      size: 64,
+                                      color: colorScheme.primary,
+                                    )
+                                  else
+                                    Icon(
+                                      Iconsax.record_circle,
+                                      size: 64,
+                                      color: colorScheme.error,
+                                    ),
+                                ],
+                              )
+                            : null,
                       ),
                     ),
                   );
@@ -393,78 +645,118 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
               ),
             ),
             const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Expanded(
-                  child: ElevatedButton(
+                  child: FilledButton.icon(
                     onPressed: _resetGame,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade700,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
+                    icon: const Icon(Iconsax.refresh_circle),
+                    label: Text(
                       'New Game',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onPrimary,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: FilledButton.tonalIcon(
                     onPressed: () {
                       // TODO: Implement hint logic
                     },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.blue.shade700,
-                      side: BorderSide(color: Colors.blue.shade700),
-                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    icon: Icon(
-                      Icons.lightbulb_outline,
-                      color: Colors.blue.shade700,
-                    ),
+                    icon: const Icon(Iconsax.lamp_on),
                     label: Text(
                       'Get Hint',
-                      style: TextStyle(
-                        color: Colors.blue.shade700,
-                        fontSize: 18,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSecondaryContainer,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Total Games: $totalGames',
-                  style: const TextStyle(fontSize: 16),
+            const SizedBox(height: 24),
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: colorScheme.outlineVariant.withOpacity(0.2),
                 ),
-                Text(
-                  'Win Rate: ${totalGames > 0 ? (xScore / totalGames * 100).toStringAsFixed(0) : 0}%',
-                  style: const TextStyle(fontSize: 16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildStatItem(
+                          icon: Iconsax.game,
+                          label: 'Total Games',
+                          value: totalGames.toString(),
+                          context: context,
+                        ),
+                        Container(
+                          height: 40,
+                          width: 1,
+                          color: colorScheme.outlineVariant.withOpacity(0.2),
+                        ),
+                        _buildStatItem(
+                          icon: Iconsax.chart_success,
+                          label: 'Win Rate',
+                          value:
+                              '${totalGames > 0 ? (xScore / totalGames * 100).toStringAsFixed(0) : 0}%',
+                          context: context,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildStatItem(
+                          icon: Iconsax.flash,
+                          label: 'Win Streak',
+                          value: winStreak.toString(),
+                          context: context,
+                        ),
+                        Container(
+                          height: 40,
+                          width: 1,
+                          color: colorScheme.outlineVariant.withOpacity(0.2),
+                        ),
+                        _buildStatItem(
+                          icon: Iconsax.coin,
+                          label: 'Reward',
+                          value: '+$tictactoeReward',
+                          isHighlighted: true,
+                          context: context,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                Text(
-                  'Longest Streak: $winStreak',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                Text(
-                  '+$tictactoeReward coins',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),

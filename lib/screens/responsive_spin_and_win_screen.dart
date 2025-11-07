@@ -100,7 +100,7 @@ class _ResponsiveSpinAndWinScreenState
     final configProvider = Provider.of<ConfigProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
     final dailySpinLimit = configProvider.appConfig['dailySpinLimit'] ?? 3;
-    final spinsUsed = userProvider.currentUser?.todayStats['spinsUsed'] ?? 0;
+    final spinsUsed = userProvider.getTodayStats()?['spinsUsed'] ?? 0;
     final isTabletOrDesktop = !ResponsiveUtils.isMobile(context);
 
     return Scaffold(

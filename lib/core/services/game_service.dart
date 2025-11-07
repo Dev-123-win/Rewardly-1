@@ -29,7 +29,7 @@ class GameService {
 
     // Clear local data and reload it to ensure consistency
     userProvider.clearUserData();
-    await userProvider.loadUser();
+    await userProvider.loadCurrentUser();
   }
 
   static Future<void> handleAdReward({
@@ -57,6 +57,6 @@ class GameService {
 
     // Clear local data and reload it to ensure consistency
     userProvider.clearUserData();
-    await userProvider.loadUser();
+    await userProvider.loadCurrentUser();
   }
 }

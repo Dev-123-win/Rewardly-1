@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:iconsax/iconsax.dart';
+import 'package:lottie/lottie.dart';
 import '../core/utils/responsive_utils.dart';
 import 'auth_screen.dart';
 
@@ -14,29 +14,48 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<Map<String, String>> onboardingData = [
+  final List<Map<String, dynamic>> onboardingData = [
     {
-      "image": "assets/onboarding1.png", // Placeholder
-      "title": "Earn Coins by Engaging",
+      "animation": "assets/lottie/watch_ads.json",
+      "title": "Earn Coins by Watching Ads",
       "description":
-          "Watch ads, spin the wheel, play games, and claim daily rewards to earn virtual coins.",
+          "Watch video ads, play games, and complete tasks to earn virtual coins instantly",
+      "size": const Size(300, 300),
     },
     {
-      "image": "assets/onboarding2.png", // Placeholder
-      "title": "Invite Friends, Earn More",
+      "animation": "assets/lottie/spin_wheel.json",
+      "title": "Spin, Play & Win Rewards",
       "description":
-          "Share your referral code and earn bonus coins when your friends join and become active.",
+          "Try your luck on spin wheel, play Tic-Tac-Toe, and other fun games to multiply earnings",
+      "size": const Size(300, 300),
     },
     {
-      "image": "assets/onboarding3.png", // Placeholder
-      "title": "Withdraw Your Earnings",
+      "animation": "assets/lottie/money_transfer.json",
+      "title": "Withdraw Real Money",
       "description":
-          "Convert your virtual coins into real money and withdraw directly to your UPI or bank account.",
+          "Convert coins to cash and withdraw directly to your UPI or bank account",
+      "size": const Size(300, 300),
     },
   ];
 
+  Widget buildDot(int index, BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      height: 8,
+      width: _currentPage == index ? 24 : 8,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: _currentPage == index
+            ? colorScheme.primary
+            : colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(4),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isDesktop = ResponsiveUtils.isDesktop(context);
     final isTablet = ResponsiveUtils.isTablet(context);
     final screenWidth = MediaQuery.of(context).size.width;
@@ -61,10 +80,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   });
                 },
                 itemBuilder: (context, index) {
-                  return OnboardingPage(
-                    image: onboardingData[index]["image"]!,
+                  return _OnboardingPage(
+                    animation: onboardingData[index]["animation"]!,
                     title: onboardingData[index]["title"]!,
                     description: onboardingData[index]["description"]!,
+                    size: onboardingData[index]["size"] as Size,
                   );
                 },
               ),
@@ -100,12 +120,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     ),
                                   );
                                 },
-                                icon: const Icon(Iconsax.arrow_right_3),
-                                label: const Text("Get Started"),
+                                icon: const Icon(Icons.arrow_forward),
+                                label: const Text(
+                                  "Get Started",
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                                 style: FilledButton.styleFrom(
-                                  minimumSize: Size(
-                                    isDesktop ? 300 : double.infinity,
-                                    isDesktop ? 64 : 56,
+                                  backgroundColor: colorScheme.primary,
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size(double.infinity, 56),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
                               )
@@ -122,7 +151,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                         ),
                                       );
                                     },
-                                    child: const Text("Skip"),
+                                    child: const Text(
+                                      "Skip",
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
                                   ),
                                   FilledButton.icon(
                                     onPressed: () {
@@ -133,8 +170,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                         curve: Curves.easeInOut,
                                       );
                                     },
-                                    icon: const Icon(Iconsax.arrow_right_3),
-                                    label: const Text("Next"),
+                                    icon: const Icon(Icons.arrow_forward),
+                                    label: const Text(
+                                      "Next",
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: colorScheme.primary,
+                                      foregroundColor: Colors.white,
+                                      minimumSize: const Size(120, 56),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -149,89 +201,84 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     );
   }
-
-  Container buildDot(int index, BuildContext context) {
-    final isDesktop = ResponsiveUtils.isDesktop(context);
-    return Container(
-      height: isDesktop ? 10 : 8,
-      width: _currentPage == index
-          ? (isDesktop ? 30 : 24)
-          : (isDesktop ? 10 : 8),
-      margin: EdgeInsets.only(right: isDesktop ? 8 : 6),
-      decoration: BoxDecoration(
-        color: _currentPage == index
-            ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(isDesktop ? 5 : 4),
-      ),
-    );
-  }
 }
 
-class OnboardingPage extends StatelessWidget {
-  final String image;
+class _OnboardingPage extends StatelessWidget {
+  final String animation;
   final String title;
   final String description;
+  final Size size;
 
-  const OnboardingPage({
-    super.key,
-    required this.image,
+  const _OnboardingPage({
+    required this.animation,
     required this.title,
     required this.description,
+    required this.size,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = ResponsiveUtils.isDesktop(context);
-    final isTablet = ResponsiveUtils.isTablet(context);
-    final padding = ResponsiveUtils.getResponsivePadding(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
-    return Padding(
-      padding: padding,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.asset(
-            image,
-            height:
-                MediaQuery.of(context).size.height *
-                (isDesktop
-                    ? 0.4
-                    : isTablet
-                    ? 0.35
-                    : 0.3),
-            fit: BoxFit.contain,
-          ),
-          SizedBox(height: isDesktop ? 64 : 48),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: isDesktop
-                  ? 32
-                  : isTablet
-                  ? 28
-                  : null,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            colorScheme.surface,
+            colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          ],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Lottie Animation
+            Container(
+              width: size.width,
+              height: size.height,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Lottie.asset(
+                animation,
+                width: size.width,
+                height: size.height,
+                fit: BoxFit.contain,
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: isDesktop ? 24 : 16),
-          SizedBox(
-            width: isDesktop
-                ? 600
-                : isTablet
-                ? 500
-                : double.infinity,
-            child: Text(
-              description,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: isDesktop ? 18 : null,
+            const SizedBox(height: 40),
+            // Title
+            Text(
+              title,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF212121),
               ),
               textAlign: TextAlign.center,
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            // Description
+            Container(
+              constraints: const BoxConstraints(maxWidth: 280),
+              child: Text(
+                description,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  height: 1.5,
+                  color: Color(0xFF757575),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

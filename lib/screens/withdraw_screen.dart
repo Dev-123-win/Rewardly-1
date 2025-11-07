@@ -66,10 +66,10 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
         await userProvider.saveWithdrawalInfo(details);
 
         await userProvider.requestWithdrawal(
-          amount,
-          _selectedMethod,
-          details,
-          minWithdrawalCoins,
+          amount: amount,
+          method: _selectedMethod,
+          details: details,
+          minWithdrawalCoins: minWithdrawalCoins,
         );
 
         if (mounted) {
@@ -100,7 +100,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final configProvider = Provider.of<ConfigProvider>(context);
-    final int coinBalance = userProvider.currentUser?.coinBalance ?? 0;
+    final int coinBalance = userProvider.currentUser?.coins ?? 0;
     final int minWithdrawalCoins = configProvider.getConfig(
       'minWithdrawalCoins',
       defaultValue: 10000,
@@ -120,267 +120,831 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
         title: 'Withdraw Coins',
         onBack: () => Navigator.of(context).pop(),
       ),
-      body: Form(
-        key: _formKey,
-        child: Center(
-          child: Container(
-            constraints: BoxConstraints(maxWidth: maxWidth),
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(isDesktop ? 32.0 : 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(isDesktop ? 24.0 : 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Current Balance',
-                            style: isDesktop
-                                ? Theme.of(context).textTheme.headlineSmall
-                                : Theme.of(context).textTheme.titleLarge,
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: Center(
+            child: Container(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(isDesktop ? 32.0 : 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Card(
+                      elevation: 2,
+                      shadowColor: Theme.of(
+                        context,
+                      ).colorScheme.shadow.withValues(alpha: 0.08),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        side: BorderSide(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.outlineVariant.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Theme.of(context).colorScheme.primaryContainer
+                                  .withValues(alpha: 0.7),
+                              Theme.of(context).colorScheme.surface,
+                            ],
                           ),
-                          SizedBox(height: isDesktop ? 16 : 8),
-                          Text(
-                            '$coinBalance coins',
-                            style:
-                                (isDesktop
-                                        ? Theme.of(
-                                            context,
-                                          ).textTheme.headlineLarge
-                                        : Theme.of(
-                                            context,
-                                          ).textTheme.headlineSmall)
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                      fontWeight: FontWeight.bold,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        padding: EdgeInsets.all(isDesktop ? 32.0 : 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.primary
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Icon(
+                                    Icons.account_balance_wallet,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    size: isDesktop ? 32 : 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Current Balance',
+                                      style:
+                                          (isDesktop
+                                                  ? Theme.of(
+                                                      context,
+                                                    ).textTheme.titleLarge
+                                                  : Theme.of(
+                                                      context,
+                                                    ).textTheme.titleMedium)
+                                              ?.copyWith(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface,
+                                                fontFamily: 'Inter',
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                     ),
-                          ),
-                          SizedBox(height: isDesktop ? 16 : 8),
-                          Text(
-                            'Minimum withdrawal: $minWithdrawalCoins coins',
-                            style: isDesktop
-                                ? Theme.of(context).textTheme.titleMedium
-                                : Theme.of(context).textTheme.bodyLarge,
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.monetization_on,
+                                          size: isDesktop ? 24 : 20,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          '$coinBalance',
+                                          style:
+                                              (isDesktop
+                                                      ? Theme.of(context)
+                                                            .textTheme
+                                                            .headlineLarge
+                                                      : Theme.of(context)
+                                                            .textTheme
+                                                            .headlineSmall)
+                                                  ?.copyWith(
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary,
+                                                    fontFamily: 'Inter',
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'coins',
+                                          style:
+                                              (isDesktop
+                                                      ? Theme.of(
+                                                          context,
+                                                        ).textTheme.titleLarge
+                                                      : Theme.of(
+                                                          context,
+                                                        ).textTheme.titleMedium)
+                                                  ?.copyWith(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .primary
+                                                        .withValues(alpha: 0.8),
+                                                    fontFamily: 'Inter',
+                                                  ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .secondaryContainer
+                                    .withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.secondary
+                                      .withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: isDesktop ? 24 : 20,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'Minimum withdrawal: ',
+                                    style:
+                                        (isDesktop
+                                                ? Theme.of(
+                                                    context,
+                                                  ).textTheme.titleMedium
+                                                : Theme.of(
+                                                    context,
+                                                  ).textTheme.bodyLarge)
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSecondaryContainer,
+                                              fontFamily: 'Inter',
+                                            ),
+                                  ),
+                                  Text(
+                                    '$minWithdrawalCoins coins',
+                                    style:
+                                        (isDesktop
+                                                ? Theme.of(
+                                                    context,
+                                                  ).textTheme.titleMedium
+                                                : Theme.of(
+                                                    context,
+                                                  ).textTheme.bodyLarge)
+                                            ?.copyWith(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.secondary,
+                                              fontFamily: 'Inter',
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: isDesktop ? 32 : 20),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.shadow.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                  SizedBox(height: isDesktop ? 32 : 20),
-                  TextFormField(
-                    controller: _amountController,
-                    keyboardType: TextInputType.number,
-                    style: isDesktop
-                        ? Theme.of(context).textTheme.titleMedium
-                        : Theme.of(context).textTheme.bodyLarge,
-                    decoration: InputDecoration(
-                      labelText: 'Amount to withdraw',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(isDesktop ? 12 : 8),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: isDesktop ? 24 : 16,
-                        vertical: isDesktop ? 20 : 16,
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an amount';
-                      }
-                      final int? amount = int.tryParse(value);
-                      if (amount == null) {
-                        return 'Please enter a valid number';
-                      }
-                      if (amount < minWithdrawalCoins) {
-                        return 'Amount must be at least $minWithdrawalCoins';
-                      }
-                      if (amount > coinBalance) {
-                        return 'Insufficient balance';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: isDesktop ? 32 : 20),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedMethod,
-                    items: ['UPI', 'Bank Transfer'].map((String method) {
-                      return DropdownMenuItem<String>(
-                        value: method,
-                        child: Text(
-                          method,
-                          style: isDesktop
-                              ? Theme.of(context).textTheme.titleMedium
-                              : Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedMethod = newValue!;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      labelText: 'Withdrawal Method',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(isDesktop ? 12 : 8),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: isDesktop ? 24 : 16,
-                        vertical: isDesktop ? 20 : 16,
-                      ),
-                    ),
-                    style: isDesktop
-                        ? Theme.of(context).textTheme.titleMedium
-                        : Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 20),
-                  if (_selectedMethod == 'UPI') ...[
-                    SizedBox(height: isDesktop ? 32 : 20),
-                    TextFormField(
-                      controller: _upiController,
-                      style: isDesktop
-                          ? Theme.of(context).textTheme.titleMedium
-                          : Theme.of(context).textTheme.bodyLarge,
-                      decoration: InputDecoration(
-                        labelText: 'UPI ID',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            isDesktop ? 12 : 8,
+                      child: TextFormField(
+                        controller: _amountController,
+                        keyboardType: TextInputType.number,
+                        style:
+                            (isDesktop
+                                    ? Theme.of(context).textTheme.titleMedium
+                                    : Theme.of(context).textTheme.bodyLarge)
+                                ?.copyWith(fontFamily: 'Inter'),
+                        decoration: InputDecoration(
+                          labelText: 'Amount to withdraw',
+                          labelStyle: TextStyle(
+                            fontFamily: 'Inter',
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: isDesktop ? 24 : 16,
-                          vertical: isDesktop ? 20 : 16,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (_selectedMethod == 'UPI' &&
-                            (value == null || value.isEmpty)) {
-                          return 'Please enter your UPI ID';
-                        }
-                        return null;
-                      },
-                    ),
-                  ] else ...[
-                    SizedBox(height: isDesktop ? 32 : 20),
-                    TextFormField(
-                      controller: _accountNumberController,
-                      style: isDesktop
-                          ? Theme.of(context).textTheme.titleMedium
-                          : Theme.of(context).textTheme.bodyLarge,
-                      decoration: InputDecoration(
-                        labelText: 'Bank Account Number',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            isDesktop ? 12 : 8,
+                          prefixIcon: Icon(
+                            Icons.monetization_on,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: isDesktop ? 24 : 16,
+                            vertical: isDesktop ? 20 : 16,
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(context).colorScheme.surface,
                         ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: isDesktop ? 24 : 16,
-                          vertical: isDesktop ? 20 : 16,
-                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter an amount';
+                          }
+                          final int? amount = int.tryParse(value);
+                          if (amount == null) {
+                            return 'Please enter a valid number';
+                          }
+                          if (amount < minWithdrawalCoins) {
+                            return 'Amount must be at least $minWithdrawalCoins';
+                          }
+                          if (amount > coinBalance) {
+                            return 'Insufficient balance';
+                          }
+                          return null;
+                        },
                       ),
-                      validator: (value) {
-                        if (_selectedMethod == 'Bank Transfer' &&
-                            (value == null || value.isEmpty)) {
-                          return 'Please enter your account number';
-                        }
-                        return null;
-                      },
                     ),
                     SizedBox(height: isDesktop ? 32 : 20),
-                    TextFormField(
-                      controller: _ifscController,
-                      style: isDesktop
-                          ? Theme.of(context).textTheme.titleMedium
-                          : Theme.of(context).textTheme.bodyLarge,
-                      decoration: InputDecoration(
-                        labelText: 'IFSC Code',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            isDesktop ? 12 : 8,
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.shadow.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: isDesktop ? 24 : 16,
-                          vertical: isDesktop ? 20 : 16,
-                        ),
+                        ],
                       ),
-                      validator: (value) {
-                        if (_selectedMethod == 'Bank Transfer' &&
-                            (value == null || value.isEmpty)) {
-                          return 'Please enter the IFSC code';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: isDesktop ? 32 : 20),
-                    TextFormField(
-                      controller: _nameController,
-                      style: isDesktop
-                          ? Theme.of(context).textTheme.titleMedium
-                          : Theme.of(context).textTheme.bodyLarge,
-                      decoration: InputDecoration(
-                        labelText: 'Account Holder Name',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            isDesktop ? 12 : 8,
-                          ),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: isDesktop ? 24 : 16,
-                          vertical: isDesktop ? 20 : 16,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (_selectedMethod == 'Bank Transfer' &&
-                            (value == null || value.isEmpty)) {
-                          return 'Please enter the account holder name';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-                  SizedBox(height: isDesktop ? 48 : 32),
-                  Center(
-                    child: SizedBox(
-                      width: isDesktop ? 300 : double.infinity,
-                      child: _isLoading
-                          ? Center(
-                              child: SizedBox(
-                                width: isDesktop ? 32 : 24,
-                                height: isDesktop ? 32 : 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: isDesktop ? 3 : 2,
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _selectedMethod,
+                        items: [
+                          DropdownMenuItem(
+                            value: 'UPI',
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer
+                                        .withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    Icons.payment,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    size: isDesktop ? 24 : 20,
+                                  ),
                                 ),
-                              ),
-                            )
-                          : FilledButton.icon(
-                              onPressed: _requestWithdrawal,
-                              icon: Icon(
-                                Icons.account_balance_wallet_outlined,
-                                size: isDesktop ? 24 : 20,
-                              ),
-                              label: Text(
-                                'Submit Request',
-                                style: TextStyle(fontSize: isDesktop ? 18 : 16),
-                              ),
-                              style: FilledButton.styleFrom(
-                                minimumSize: Size(
-                                  double.infinity,
-                                  isDesktop ? 64 : 56,
+                                const SizedBox(width: 12),
+                                Text(
+                                  'UPI',
+                                  style:
+                                      (isDesktop
+                                              ? Theme.of(
+                                                  context,
+                                                ).textTheme.titleMedium
+                                              : Theme.of(
+                                                  context,
+                                                ).textTheme.bodyLarge)
+                                          ?.copyWith(
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                 ),
+                              ],
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Bank Transfer',
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer
+                                        .withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    Icons.account_balance,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    size: isDesktop ? 24 : 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Bank Transfer',
+                                  style:
+                                      (isDesktop
+                                              ? Theme.of(
+                                                  context,
+                                                ).textTheme.titleMedium
+                                              : Theme.of(
+                                                  context,
+                                                ).textTheme.bodyLarge)
+                                          ?.copyWith(
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            _selectedMethod = newValue!;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Withdrawal Method',
+                          labelStyle: TextStyle(
+                            fontFamily: 'Inter',
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withOpacity(0.2),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withOpacity(0.2),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: isDesktop ? 24 : 16,
+                            vertical: isDesktop ? 20 : 16,
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(context).colorScheme.surface,
+                        ),
+                        style:
+                            (isDesktop
+                                    ? Theme.of(context).textTheme.titleMedium
+                                    : Theme.of(context).textTheme.bodyLarge)
+                                ?.copyWith(fontFamily: 'Inter'),
+                        icon: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        dropdownColor: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    if (_selectedMethod == 'UPI')
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.shadow.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: TextFormField(
+                          controller: _upiController,
+                          style:
+                              (isDesktop
+                                      ? Theme.of(context).textTheme.titleMedium
+                                      : Theme.of(context).textTheme.bodyLarge)
+                                  ?.copyWith(fontFamily: 'Inter'),
+                          decoration: InputDecoration(
+                            labelText: 'UPI ID',
+                            labelStyle: TextStyle(
+                              fontFamily: 'Inter',
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.payment,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.outline.withValues(alpha: 0.2),
                               ),
                             ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.outline.withOpacity(0.2),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: isDesktop ? 24 : 16,
+                              vertical: isDesktop ? 20 : 16,
+                            ),
+                            filled: true,
+                            fillColor: Theme.of(context).colorScheme.surface,
+                          ),
+                          validator: (value) {
+                            if (_selectedMethod == 'UPI' &&
+                                (value == null || value.isEmpty)) {
+                              return 'Please enter your UPI ID';
+                            }
+                            return null;
+                          },
+                        ),
+                      )
+                    else
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.shadow.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: _accountNumberController,
+                              style:
+                                  (isDesktop
+                                          ? Theme.of(
+                                              context,
+                                            ).textTheme.titleMedium
+                                          : Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge)
+                                      ?.copyWith(fontFamily: 'Inter'),
+                              decoration: InputDecoration(
+                                labelText: 'Bank Account Number',
+                                labelStyle: TextStyle(
+                                  fontFamily: 'Inter',
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.account_balance,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline.withOpacity(0.2),
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline.withOpacity(0.2),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                ),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 24 : 16,
+                                  vertical: isDesktop ? 20 : 16,
+                                ),
+                                filled: true,
+                                fillColor: Theme.of(
+                                  context,
+                                ).colorScheme.surface,
+                              ),
+                              validator: (value) {
+                                if (_selectedMethod == 'Bank Transfer' &&
+                                    (value == null || value.isEmpty)) {
+                                  return 'Please enter your account number';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _ifscController,
+                              style:
+                                  (isDesktop
+                                          ? Theme.of(
+                                              context,
+                                            ).textTheme.titleMedium
+                                          : Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge)
+                                      ?.copyWith(fontFamily: 'Inter'),
+                              decoration: InputDecoration(
+                                labelText: 'IFSC Code',
+                                labelStyle: TextStyle(
+                                  fontFamily: 'Inter',
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.receipt_long,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline.withOpacity(0.2),
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline.withOpacity(0.2),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                ),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 24 : 16,
+                                  vertical: isDesktop ? 20 : 16,
+                                ),
+                                filled: true,
+                                fillColor: Theme.of(
+                                  context,
+                                ).colorScheme.surface,
+                              ),
+                              validator: (value) {
+                                if (_selectedMethod == 'Bank Transfer' &&
+                                    (value == null || value.isEmpty)) {
+                                  return 'Please enter the IFSC code';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _nameController,
+                              style:
+                                  (isDesktop
+                                          ? Theme.of(
+                                              context,
+                                            ).textTheme.titleMedium
+                                          : Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge)
+                                      ?.copyWith(fontFamily: 'Inter'),
+                              decoration: InputDecoration(
+                                labelText: 'Account Holder Name',
+                                labelStyle: TextStyle(
+                                  fontFamily: 'Inter',
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.person,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline.withOpacity(0.2),
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline.withOpacity(0.2),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                ),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 24 : 16,
+                                  vertical: isDesktop ? 20 : 16,
+                                ),
+                                filled: true,
+                                fillColor: Theme.of(
+                                  context,
+                                ).colorScheme.surface,
+                              ),
+                              validator: (value) {
+                                if (_selectedMethod == 'Bank Transfer' &&
+                                    (value == null || value.isEmpty)) {
+                                  return 'Please enter the account holder name';
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 32),
+                    Center(
+                      child: Container(
+                        width: isDesktop ? 300 : double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Theme.of(context).colorScheme.primary,
+                              Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.8),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: _isLoading
+                            ? Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: SizedBox(
+                                    width: isDesktop ? 32 : 24,
+                                    height: isDesktop ? 32 : 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: isDesktop ? 3 : 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Theme.of(context).colorScheme.onPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : FilledButton.icon(
+                                onPressed: _requestWithdrawal,
+                                icon: Icon(
+                                  Icons.account_balance_wallet_outlined,
+                                  size: isDesktop ? 24 : 20,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
+                                ),
+                                label: Text(
+                                  'Submit Withdrawal Request',
+                                  style:
+                                      (isDesktop
+                                              ? Theme.of(
+                                                  context,
+                                                ).textTheme.titleLarge
+                                              : Theme.of(
+                                                  context,
+                                                ).textTheme.titleMedium)
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onPrimary,
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                ),
+                                style:
+                                    FilledButton.styleFrom(
+                                      minimumSize: Size(
+                                        double.infinity,
+                                        isDesktop ? 64 : 56,
+                                      ),
+                                      backgroundColor: Colors.transparent,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                    ).copyWith(
+                                      elevation:
+                                          WidgetStateProperty.resolveWith<
+                                            double
+                                          >((states) {
+                                            if (states.contains(
+                                              WidgetState.pressed,
+                                            )) {
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }),
+                                    ),
+                              ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

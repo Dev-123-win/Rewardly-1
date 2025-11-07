@@ -137,35 +137,43 @@ class WhackAMoleController extends ChangeNotifier {
     final context = navigatorKey.currentContext;
     if (context == null) return;
 
-    // Get providers before async gap
+    // Get providers and data before async operations
+    final gameData = {
+      'consecutiveHits': consecutiveHits,
+      'duration': result?.inSeconds ?? 0,
+    };
+    final coinsToAward = currentGameCoins;
+
+    // Access providers and cache necessary values before async gap
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final adProvider = Provider.of<AdProvider>(context, listen: false);
     final isRewardedAdReady = adProvider.isRewardedAdReady;
 
-    // Add coins to user's balance
-    if (currentGameCoins > 0) {
+    // Handle coin awards if any
+    if (coinsToAward > 0) {
       await GameService.handleGameEarnings(
         userProvider: userProvider,
-        amount: currentGameCoins,
+        amount: coinsToAward,
         gameType: 'whack_a_mole',
-        metadata: {
-          'consecutiveHits': consecutiveHits,
-          'duration': result?.inSeconds ?? 0,
-        },
+        metadata: gameData,
       );
     }
 
-    // Check mounted state before continuing with UI operations
-    if (navigatorKey.currentContext == null) return;
+    // Cache the context check in a local variable
+    if (!context.mounted) return;
 
+    // Check if we should show ad
+    if (!context.mounted) return;
+
+    // Show ad if ready
     if (isRewardedAdReady) {
       adProvider.showRewardedAd(
         onAdEarned: (reward) async {
-          // Give bonus coins for watching ad
-          currentGameCoins += 10;
+          final bonusAmount = 10;
+          currentGameCoins += bonusAmount;
           await GameService.handleAdReward(
             userProvider: userProvider,
-            amount: 10,
+            amount: bonusAmount,
             source: 'whack_a_mole',
           );
         },

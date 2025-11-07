@@ -130,7 +130,7 @@ class HomeTab extends StatelessWidget {
               children: [
                 const Icon(Icons.monetization_on),
                 const SizedBox(width: 4),
-                Text(userProvider.currentUser?.coinBalance.toString() ?? '0'),
+                Text(userProvider.currentUser?.coins.toString() ?? '0'),
               ],
             ),
           ),
