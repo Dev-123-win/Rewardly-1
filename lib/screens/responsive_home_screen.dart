@@ -9,7 +9,7 @@ import 'invite_screen.dart';
 import 'transaction_history_screen.dart';
 import 'profile_screen.dart';
 import 'watch_ads_screen.dart';
-import 'spin_and_win_screen.dart';
+import 'spin_and_win_screen_v2.dart';
 import 'tic_tac_toe_screen.dart';
 import 'withdraw_screen.dart';
 

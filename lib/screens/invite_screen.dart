@@ -27,10 +27,7 @@ class InviteScreen extends StatelessWidget {
     final padding = ResponsiveUtils.getResponsivePadding(context);
 
     return Scaffold(
-      appBar: CustomAppBar(
-        title: 'Invite & Earn',
-        onBack: () => Navigator.of(context).pop(),
-      ),
+      appBar: const CustomAppBar(title: 'Invite & Earn'),
       body: Center(
         child: Container(
           constraints: BoxConstraints(maxWidth: maxWidth),

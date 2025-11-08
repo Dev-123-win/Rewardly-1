@@ -24,6 +24,7 @@ class UserProvider with ChangeNotifier {
   User? get currentUser => _currentUser;
   String? get referralCode => _currentUser?.referralCode;
   SharedPreferences get sharedPreferences => _prefs;
+  LocalTransactionRepository? get transactionRepo => _transactionRepo; // Expose the transaction repository
 
   List<Map<String, dynamic>> get referredUsers {
     final user = auth.FirebaseAuth.instance.currentUser;

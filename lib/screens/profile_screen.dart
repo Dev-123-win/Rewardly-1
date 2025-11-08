@@ -3,11 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
+import '../providers/settings_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
-
-import 'edit_profile_screen.dart';
-import 'settings_screen.dart';
 import 'help_support_screen.dart';
 import 'auth_screen.dart';
 
@@ -25,10 +23,7 @@ class ProfileScreen extends StatelessWidget {
     final padding = ResponsiveUtils.getResponsivePadding(context);
 
     return Scaffold(
-      appBar: CustomAppBar(
-        title: 'Profile',
-        onBack: () => Navigator.of(context).pop(),
-      ),
+      appBar: const CustomAppBar(title: 'Profile'),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return Center(
@@ -278,14 +273,17 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       child: Column(
                         children: <Widget>[
-                          _buildListTile(
+                          _buildSwitchListTile(
                             context,
-                            'Edit Profile',
-                            Iconsax.edit,
-                            () => Navigator.pushNamed(
+                            'Enable Notifications',
+                            Iconsax.notification,
+                            Provider.of<SettingsProvider>(
                               context,
-                              EditProfileScreen.routeName,
-                            ),
+                            ).notificationsEnabled,
+                            (value) => Provider.of<SettingsProvider>(
+                              context,
+                              listen: false,
+                            ).toggleNotifications(value),
                             showDivider: true,
                           ),
                           _buildListTile(
@@ -295,16 +293,6 @@ class ProfileScreen extends StatelessWidget {
                             () {
                               /* TODO: Navigate to Payment Methods screen */
                             },
-                            showDivider: true,
-                          ),
-                          _buildListTile(
-                            context,
-                            'Settings',
-                            Iconsax.setting_2,
-                            () => Navigator.pushNamed(
-                              context,
-                              SettingsScreen.routeName,
-                            ),
                             showDivider: true,
                           ),
                           _buildListTile(
@@ -357,6 +345,65 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSwitchListTile(
+    BuildContext context,
+    String title,
+    IconData icon,
+    bool value,
+    ValueChanged<bool> onChanged, {
+    bool showDivider = false,
+  }) {
+    final isDesktop = ResponsiveUtils.isDesktop(context);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isDesktop ? 32 : 24,
+            vertical: isDesktop ? 12 : 8,
+          ),
+          secondary: Container(
+            width: isDesktop ? 48 : 40,
+            height: isDesktop ? 48 : 40,
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              icon,
+              color: colorScheme.primary,
+              size: isDesktop ? 24 : 20,
+            ),
+          ),
+          title: Text(
+            title,
+            style:
+                (isDesktop
+                        ? Theme.of(context).textTheme.titleMedium
+                        : Theme.of(context).textTheme.bodyLarge)
+                    ?.copyWith(
+                      color: colorScheme.onSurface,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w500,
+                    ),
+          ),
+          value: value,
+          onChanged: onChanged,
+        ),
+        if (showDivider)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 24),
+            child: Divider(
+              color: colorScheme.outlineVariant.withOpacity(0.2),
+              height: 1,
+            ),
+          ),
+      ],
     );
   }
 

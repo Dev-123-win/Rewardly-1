@@ -7,7 +7,7 @@ import '../../screens/invite_screen.dart';
 import '../../screens/transaction_history_screen.dart';
 import '../../screens/profile_screen.dart';
 import '../../screens/watch_ads_screen.dart';
-import '../../screens/spin_and_win_screen.dart';
+import '../../screens/spin_and_win_screen_v2.dart';
 import '../../screens/tic_tac_toe_screen.dart';
 import '../../screens/withdraw_screen.dart';
 import '../../screens/edit_profile_screen.dart';

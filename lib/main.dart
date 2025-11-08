@@ -24,7 +24,7 @@ import 'providers/auth_provider.dart' as my_auth_provider;
 import 'providers/user_provider.dart';
 import 'providers/config_provider.dart';
 import 'providers/settings_provider.dart';
-import 'providers/ad_provider.dart';
+import 'providers/ad_provider_new.dart';
 
 // Screens
 
@@ -70,7 +70,7 @@ void main() async {
 
         ChangeNotifierProvider(create: (_) => ConfigProvider(configService)),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => AdProvider()),
+        ChangeNotifierProvider(create: (_) => AdProviderNew()),
 
         ChangeNotifierProvider(
           create: (context) => UserProvider(

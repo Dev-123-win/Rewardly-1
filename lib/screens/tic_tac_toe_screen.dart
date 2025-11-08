@@ -6,6 +6,8 @@ import '../providers/ad_provider.dart';
 import '../providers/user_provider.dart';
 import '../providers/config_provider.dart';
 import '../widgets/custom_app_bar.dart';
+import '../widgets/tic_tac_toe_stats_dialog.dart';
+import '../models/tic_tac_toe_history.dart';
 
 class TicTacToeScreen extends StatefulWidget {
   static const String routeName = '/tic-tac-toe';
@@ -24,6 +26,8 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
   int oScore = 0;
   int totalGames = 0;
   int winStreak = 0;
+  int totalCoinsEarned = 0;
+  List<TicTacToeHistory> gameHistory = [];
   bool _isGameOver = false;
   bool _isAITurn = false;
 
@@ -43,12 +47,17 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final todayStats = userProvider.todayStats;
     final todayGames = todayStats['tictactoeGames'] ?? 0;
+    final coins = todayStats['tictactoeCoins'] ?? 0;
+
+    // Load game history from shared preferences or local storage
+    // TODO: Implement persistent storage for game history
 
     setState(() {
       totalGames = todayGames;
       xScore = todayStats['tictactoeWins'] ?? 0;
       oScore = todayStats['tictatoeLosses'] ?? 0;
       winStreak = todayStats['tictactoeStreak'] ?? 0;
+      totalCoinsEarned = coins;
     });
   }
 
@@ -210,6 +219,60 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
         winStreak = currentStreak;
         totalGames = currentGames + 1;
       });
+
+      // Show rewarded ad to claim coins
+      final adProvider = Provider.of<AdProvider>(context, listen: false);
+      final configProvider = Provider.of<ConfigProvider>(
+        context,
+        listen: false,
+      );
+      final int tictactoeReward =
+          configProvider.appConfig['rewards']?['tictactoeReward'] ?? 4;
+
+      if (adProvider.rewardedAd != null) {
+        adProvider.showRewardedAd(
+          onAdEarned: (reward) async {
+            await provider.playTicTacToeAndEarnCoins(tictactoeReward);
+            if (!mounted) return;
+            setState(() {
+              totalCoinsEarned += tictactoeReward;
+              // Add to game history
+              gameHistory.insert(
+                0,
+                TicTacToeHistory(
+                  date: DateTime.now(),
+                  isWin: true,
+                  coinsEarned: tictactoeReward,
+                  opponent: 'AI',
+                ),
+              );
+              // Keep only last 10 games in history
+              if (gameHistory.length > 10) {
+                gameHistory.removeLast();
+              }
+            });
+
+            // Show reward message
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('You earned $tictactoeReward coins!'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            adProvider.loadRewardedAd(); // Load next ad
+          },
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ad not ready. No coins awarded.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        adProvider.loadRewardedAd();
+      }
     } else if (result == 'O') {
       currentLosses++;
       currentStreak = 0;
@@ -220,6 +283,20 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
         winStreak = 0;
         totalGames = currentGames + 1;
       });
+
+      // Add loss to history
+      gameHistory.insert(
+        0,
+        TicTacToeHistory(
+          date: DateTime.now(),
+          isWin: false,
+          coinsEarned: 0,
+          opponent: 'AI',
+        ),
+      );
+      if (gameHistory.length > 10) {
+        gameHistory.removeLast();
+      }
     } else {
       currentStreak = 0;
       todayStats['tictactoeStreak'] = currentStreak;
@@ -227,35 +304,23 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
         winStreak = 0;
         totalGames = currentGames + 1;
       });
+
+      // Add draw to history
+      gameHistory.insert(
+        0,
+        TicTacToeHistory(
+          date: DateTime.now(),
+          isWin: false,
+          coinsEarned: 0,
+          opponent: 'AI',
+        ),
+      );
+      if (gameHistory.length > 10) {
+        gameHistory.removeLast();
+      }
     }
 
     todayStats['tictactoeGames'] = currentGames + 1;
-
-    // Show rewarded ad to claim coins
-    final adProvider = Provider.of<AdProvider>(context, listen: false);
-    final configProvider = Provider.of<ConfigProvider>(context, listen: false);
-    final int tictactoeReward =
-        configProvider.appConfig['rewards']?['tictactoeReward'] ?? 4;
-
-    if (adProvider.rewardedAd != null) {
-      adProvider.showRewardedAd(
-        onAdEarned: (reward) async {
-          await provider.playTicTacToeAndEarnCoins(tictactoeReward);
-          if (!mounted) return;
-          // Optionally show a toast/snackbar for coins earned
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('You earned $tictactoeReward coins!')),
-          );
-          adProvider.loadRewardedAd(); // Load next ad
-        },
-      );
-    } else {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ad not ready. No coins awarded.')),
-      );
-      adProvider.loadRewardedAd();
-    }
   }
 
   Widget _buildStatItem({
@@ -321,8 +386,19 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Iconsax.info_circle),
+            tooltip: 'View Stats',
             onPressed: () {
-              // TODO: Show game rules/info
+              showDialog(
+                context: context,
+                builder: (context) => TicTacToeStatsDialog(
+                  totalGames: totalGames,
+                  winStreak: winStreak,
+                  xScore: xScore,
+                  oScore: oScore,
+                  totalCoinsEarned: totalCoinsEarned,
+                  gameHistory: gameHistory,
+                ),
+              );
             },
           ),
         ],
@@ -332,23 +408,10 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
         child: Column(
           children: [
             Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-                side: BorderSide(
-                  color: colorScheme.outlineVariant.withOpacity(0.2),
-                ),
-              ),
+              elevation: 0,
+              color: colorScheme.surfaceContainerLow,
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      colorScheme.primaryContainer,
-                      colorScheme.primary.withOpacity(0.1),
-                    ],
-                  ),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 padding: const EdgeInsets.symmetric(

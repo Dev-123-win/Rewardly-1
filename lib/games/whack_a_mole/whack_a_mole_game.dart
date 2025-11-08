@@ -136,6 +136,7 @@ class WhackAMoleController extends ChangeNotifier {
   Future<void> _handleGameOver() async {
     final context = navigatorKey.currentContext;
     if (context == null) return;
+    if (!context.mounted) return; // Ensure context is still mounted
 
     // Get providers and data before async operations
     final gameData = {
@@ -163,7 +164,7 @@ class WhackAMoleController extends ChangeNotifier {
     if (!context.mounted) return;
 
     // Check if we should show ad
-    if (!context.mounted) return;
+    // Removed redundant context.mounted check
 
     // Show ad if ready
     if (isRewardedAdReady) {
