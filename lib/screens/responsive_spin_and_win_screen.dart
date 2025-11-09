@@ -64,7 +64,7 @@ class _ResponsiveSpinAndWinScreenState
   void _onSpinEnd() {
     final reward = _spinRewards[_currentSpinIndex];
     final adProvider = Provider.of<AdProviderNew>(context, listen: false);
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
     final configProvider = Provider.of<ConfigProvider>(context, listen: false);
     final dailySpinLimit = configProvider.appConfig['dailySpinLimit'] ?? 3;
 
@@ -102,7 +102,7 @@ class _ResponsiveSpinAndWinScreenState
   @override
   Widget build(BuildContext context) {
     final configProvider = Provider.of<ConfigProvider>(context);
-    final userProvider = Provider.of<UserProvider>(context);
+    final userProvider = Provider.of<UserProviderNew>(context);
     final dailySpinLimit = configProvider.appConfig['dailySpinLimit'] ?? 3;
     final today = DateTime.now().toIso8601String().substring(0, 10);
     final spinsUsed =

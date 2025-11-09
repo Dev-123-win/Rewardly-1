@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
-import '../providers/user_provider.dart';
+import '../providers/user_provider_new.dart';
 import '../widgets/daily_reward_modal.dart';
 import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
@@ -9,7 +9,7 @@ import 'invite_screen.dart';
 import 'transaction_history_screen.dart';
 import 'profile_screen.dart';
 import 'watch_ads_screen_new.dart' as watch_ads; // Changed to watch_ads_screen_new.dart
-import 'spin_and_win_screen_v2.dart';
+import 'spin_and_win_screen_new.dart';
 import 'tic_tac_toe_screen.dart';
 import 'withdraw_screen.dart';
 
@@ -117,7 +117,7 @@ class HomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
+    final userProvider = Provider.of<UserProviderNew>(context);
     final isTabletOrDesktop = !ResponsiveUtils.isMobile(context);
 
     return Scaffold(
@@ -245,7 +245,7 @@ class HomeTab extends StatelessWidget {
                             'Try your luck on the wheel',
                             () => Navigator.pushNamed(
                               context,
-                              SpinAndWinScreen.routeName,
+                              SpinAndWinScreenNew.routeName,
                             ),
                           ),
                           _buildEarningMethodCard(
@@ -281,7 +281,7 @@ class HomeTab extends StatelessWidget {
                               onTap: () {
                                 Navigator.pushNamed(
                                   context,
-                                  watch_ads.WatchAdsScreen.routeName, // Changed to watch_ads.WatchAdsScreen.routeName
+                                  watch_ads.WatchAdsScreen.routeName,
                                 );
                               },
                             ),
@@ -306,7 +306,7 @@ class HomeTab extends StatelessWidget {
                               onTap: () {
                                 Navigator.pushNamed(
                                   context,
-                                  SpinAndWinScreen.routeName,
+                                  SpinAndWinScreenNew.routeName,
                                 );
                               },
                             ),

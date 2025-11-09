@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../screens/splash_screen.dart';
 import '../../screens/local_auth_screen.dart';
 import '../../screens/main_container_screen.dart';
 import '../../screens/main_home_screen.dart';
@@ -22,19 +21,10 @@ class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     return MaterialPageRoute(
       builder: (context) {
-        // Handle initial route based on auth state
-        if (settings.name == '/') {
-          return const SplashScreen();
-        }
-
-        // Auth check is now handled in the splash screen
-        switch (settings.name) {
-          case LocalAuthScreen.routeName:
-            return const LocalAuthScreen();
-        }
-
         // Return appropriate screen based on route name
         switch (settings.name) {
+          case '/':
+            return const LocalAuthScreen(); // Default route for local
           case MainHomeScreen.routeName:
             return const MainContainerScreen();
           case LocalAuthScreen.routeName:

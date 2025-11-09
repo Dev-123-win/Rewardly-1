@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
-import '../providers/user_provider.dart';
+import '../providers/user_provider_new.dart';
 import 'watch_ads_screen_new.dart';
-import 'spin_and_win_screen_v2.dart';
+import 'spin_and_win_screen_new.dart';
 import 'tic_tac_toe_screen.dart';
 import 'withdraw_screen.dart';
 import 'daily_bonus_screen.dart';
@@ -13,163 +13,177 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
+    final userProvider = Provider.of<UserProviderNew>(context);
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top Bar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: colorScheme.primaryContainer,
-                    child: Icon(
-                      Icons.person_outline_rounded,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Iconsax.wallet_3, size: 16),
-                              const SizedBox(width: 8),
-                              Container(
-                                height: 16,
-                                width: 1,
-                                color: colorScheme.outlineVariant,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '₹${userProvider.currentUser?.coins.toString() ?? '0'}',
-                                style: Theme.of(context).textTheme.labelLarge
-                                    ?.copyWith(
-                                      color: colorScheme.primary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.notifications_outlined),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Welcome Text
-              Text(
-                'Hello, ${userProvider.currentUser?.displayName ?? 'User'}!',
-                style: Theme.of(
-                  context,
-                ).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 24),
-
-              // Balance Card
-              Card(
-                elevation: 0,
-                color: colorScheme.secondaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Your Balance',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '${userProvider.currentUser?.coins ?? 0} coins',
-                            style: Theme.of(context).textTheme.headlineMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          FilledButton(
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                WithdrawScreen.routeName,
-                              );
-                            },
-                            child: const Text('Withdraw'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Daily Bonus Card
-              Card(
-                elevation: 0,
-                child: ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(Iconsax.calendar, color: colorScheme.primary),
-                  ),
-                  title: Text(
-                    'Daily Bonus Claim',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  subtitle: Row(
-                    children: [
-                      Icon(
-                        Iconsax.timer_1,
-                        size: 14,
+        child: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              SliverAppBar(
+                floating: true,
+                snap: true,
+                automaticallyImplyLeading: false,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: colorScheme.primaryContainer,
+                      child: Icon(
+                        Icons.person_outline_rounded,
                         color: colorScheme.primary,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Day ${userProvider.currentUser?.dailyStreak ?? 1} streak',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.w500,
+                    ),
+                    Row(
+                      children: [
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Iconsax.wallet_3, size: 16),
+                                const SizedBox(width: 8),
+                                Container(
+                                  height: 16,
+                                  width: 1,
+                                  color: colorScheme.outlineVariant,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '₹${userProvider.currentUser?.coins.toString() ?? '0'}',
+                                  style: Theme.of(context).textTheme.labelLarge
+                                      ?.copyWith(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  trailing: FilledButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, DailyBonusScreen.routeName);
-                    },
-                    child: const Text('Claim'),
-                  ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () {},
+                          icon: const Icon(Icons.notifications_outlined),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
+            ];
+          },
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+                // Welcome Text
+                Text(
+                  'Hello, ${userProvider.currentUser?.displayName ?? 'User'}!',
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 24),
 
-              // Games Grid
-              Expanded(
-                child: GridView.count(
+                // Balance Card
+                Card(
+                  elevation: 0,
+                  color: colorScheme.secondaryContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Your Balance',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${userProvider.currentUser?.coins ?? 0} coins',
+                              style: Theme.of(context).textTheme.headlineMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            FilledButton(
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  WithdrawScreen.routeName,
+                                );
+                              },
+                              child: const Text('Withdraw'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Daily Bonus Card
+                Card(
+                  elevation: 0,
+                  child: ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Iconsax.calendar, color: colorScheme.primary),
+                    ),
+                    title: Text(
+                      'Daily Bonus Claim',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    subtitle: Row(
+                      children: [
+                        Icon(
+                          Iconsax.timer_1,
+                          size: 14,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Day ${userProvider.currentUser?.dailyStreak ?? 1} streak',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: colorScheme.primary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+                      ],
+                    ),
+                    trailing: FilledButton(
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          DailyBonusScreen.routeName,
+                        );
+                      },
+                      child: const Text('Claim'),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Games Grid
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   crossAxisCount: 2,
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
@@ -191,7 +205,7 @@ class HomeScreen extends StatelessWidget {
                       'Try your luck on the wheel',
                       () => Navigator.pushNamed(
                         context,
-                        SpinAndWinScreen.routeName,
+                        SpinAndWinScreenNew.routeName,
                       ),
                     ),
                     _buildGameCard(
@@ -213,8 +227,9 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),

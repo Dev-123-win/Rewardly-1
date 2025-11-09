@@ -1,10 +1,10 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../providers/user_provider.dart';
+import '../../providers/user_provider_new.dart';
 import '../../data/repositories/local_transaction_repository.dart';
 
 class GameService {
   static Future<void> handleGameEarnings({
-    required UserProvider userProvider,
+    required UserProviderNew userProvider,
     required int amount,
     required String gameType,
     required Map<String, dynamic> metadata,
@@ -33,7 +33,7 @@ class GameService {
   }
 
   static Future<void> handleAdReward({
-    required UserProvider userProvider,
+    required UserProviderNew userProvider,
     required int amount,
     required String source,
   }) async {

@@ -4,7 +4,7 @@ import 'package:iconsax/iconsax.dart';
 class SpinResultDialog extends StatelessWidget {
   final int coins;
 
-  const SpinResultDialog({Key? key, required this.coins}) : super(key: key);
+  const SpinResultDialog({super.key, required this.coins});
 
   @override
   Widget build(BuildContext context) {

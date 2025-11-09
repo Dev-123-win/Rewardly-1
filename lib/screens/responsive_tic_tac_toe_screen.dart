@@ -40,7 +40,7 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
   }
 
   void _loadGameStats() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
     final today = DateTime.now().toIso8601String().substring(0, 10);
     setState(() {
       totalGames =
@@ -195,7 +195,7 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
 
   void _showWinDialog() async {
     final adProvider = Provider.of<AdProviderNew>(context, listen: false);
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
     final configProvider = Provider.of<ConfigProvider>(context, listen: false);
     final tictactoeReward =
         configProvider.appConfig['rewards']?['tictactoeReward'] ?? 4;
@@ -376,4 +376,3 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
   }
 
   }
-

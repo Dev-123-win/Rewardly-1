@@ -97,10 +97,12 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
       context: context,
       barrierDismissible: false,
       builder: (context) => SpinResultDialog(coins: coins),
-    ).then((_) {
+    ).then((_) async { // Made the callback async
+      if (!mounted) return; // Check mounted state
+
       if (coins > 0) {
         // Record the reward if coins were won
-        Provider.of<UserProvider>(
+        Provider.of<UserProviderNew>(
           context,
           listen: false,
         ).recordGameReward(gameType: 'spin', amount: coins);

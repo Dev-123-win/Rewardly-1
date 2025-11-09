@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
 import '../widgets/custom_app_bar.dart';
-import '../providers/user_provider.dart';
+import '../providers/local_user_provider.dart';
 import '../data/models/transaction.dart' as app_transaction;
 
 class TransactionHistoryScreen extends StatefulWidget {
@@ -20,7 +20,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
+    final userProvider = Provider.of<LocalUserProvider>(context);
     final List<app_transaction.Transaction> allTransactions =
         userProvider.transactionRepo?.getAllTransactions() ?? [];
 

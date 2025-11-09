@@ -1,13 +1,20 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class ConfigService {
-  final FirebaseFirestore _firestore;
+  SharedPreferences? _prefs;
   Map<String, dynamic> _config = {};
   DateTime? _lastFetch;
   static const _cacheExpiryDuration = Duration(hours: 24);
 
-  ConfigService(this._firestore);
+  ConfigService() {
+    _initPrefs();
+  }
+
+  Future<void> _initPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+  }
 
   Future<void> initialize() async {
     await _fetchConfig();
@@ -15,18 +22,33 @@ class ConfigService {
 
   Future<void> _fetchConfig() async {
     try {
-      final doc = await _firestore
-          .collection('app_config')
-          .doc('settings')
-          .get();
-      if (doc.exists) {
-        _config = doc.data() ?? {};
+      final configJson = _prefs?.getString('app_config');
+      if (configJson != null) {
+        _config = json.decode(configJson);
         _lastFetch = DateTime.now();
+      } else {
+        // Initialize with default values
+        _config = {
+          'rewards': {
+            'referrerBonus': 500,
+            'refereeBonus': 200,
+            'dailyBonus': 100,
+            'adReward': 10,
+            'spinReward': 20,
+            'gameReward': 15,
+          },
+          'limits': {'dailyAds': 10, 'dailySpins': 3, 'minWithdrawal': 10000},
+        };
+        await _saveConfig();
       }
     } catch (e) {
-      // In case of error, keep using cached config
-      debugPrint('Error fetching config: $e');
+      debugPrint('Error loading config: $e');
     }
+  }
+
+  Future<void> _saveConfig() async {
+    await _prefs?.setString('app_config', json.encode(_config));
+    _lastFetch = DateTime.now();
   }
 
   dynamic getValue(String key, {dynamic defaultValue}) {

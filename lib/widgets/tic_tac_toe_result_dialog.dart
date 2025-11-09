@@ -6,10 +6,10 @@ class TicTacToeResultDialog extends StatelessWidget {
   final VoidCallback onClaimCoins;
 
   const TicTacToeResultDialog({
-    Key? key,
+    super.key,
     required this.result,
     required this.onClaimCoins,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

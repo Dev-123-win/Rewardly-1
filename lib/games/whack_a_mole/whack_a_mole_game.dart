@@ -1,9 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/navigation/navigation_service.dart';
 import '../../core/services/game_service.dart';
-import '../../providers/user_provider.dart';
+import '../../providers/user_provider_new.dart';
 import '../../providers/ad_provider_new.dart';
 import '../../widgets/custom_app_bar.dart';
 
@@ -28,9 +27,11 @@ class WhackAMoleGame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => WhackAMoleController(
+      create: (context) => WhackAMoleController(
         initialDuration: const Duration(minutes: 1),
         totalMoles: 9,
+        userProvider: Provider.of<UserProviderNew>(context, listen: false),
+        adProvider: Provider.of<AdProviderNew>(context, listen: false),
       ),
       child: const WhackAMolePage(),
     );
@@ -73,10 +74,15 @@ class WhackAMoleController extends ChangeNotifier {
   WhackAMoleController({
     Duration initialDuration = const Duration(minutes: 1),
     int totalMoles = 9,
+    required this.userProvider,
+    required this.adProvider,
   }) : _duration = initialDuration,
        _length = totalMoles {
     _initGame();
   }
+
+  final UserProviderNew userProvider;
+  final AdProviderNew adProvider;
 
   final Duration _duration;
   final int _length;
@@ -134,19 +140,12 @@ class WhackAMoleController extends ChangeNotifier {
   }
 
   void _handleGameOver() {
-    final context = navigatorKey.currentContext;
-    if (context == null || !context.mounted) return;
-
     // Get providers and data before async operations
     final gameData = {
       'consecutiveHits': consecutiveHits,
       'duration': result?.inSeconds ?? 0,
     };
     final coinsToAward = currentGameCoins;
-
-    // Access providers and cache necessary values before async gap
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final adProvider = Provider.of<AdProviderNew>(context, listen: false);
 
     // Use a separate async function to handle the logic after the build phase
     Future.microtask(() async {
@@ -338,5 +337,3 @@ class _GameOverPanel extends StatelessWidget {
     );
   }
 }
-  
-

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/payment_method.dart';
-import '../providers/user_provider.dart';
+import '../providers/user_provider_new.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   const PaymentMethodsScreen({super.key});
@@ -37,7 +37,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   }
 
   void _loadSavedPaymentMethods() {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
     final paymentMethods = userProvider.currentUser?.paymentMethods ?? [];
 
     for (final methodJson in paymentMethods) {
@@ -55,7 +55,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
   Future<void> _saveUPIDetails() async {
     if (_formKeyUPI.currentState?.validate() ?? false) {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final userProvider = Provider.of<UserProviderNew>(context, listen: false);
       final upiMethod = PaymentMethod.createUPI(_upiController.text);
 
       await userProvider.updatePaymentMethod(upiMethod);
@@ -69,7 +69,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
   Future<void> _saveBankDetails() async {
     if (_formKeyBank.currentState?.validate() ?? false) {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final userProvider = Provider.of<UserProviderNew>(context, listen: false);
       final bankMethod = PaymentMethod.createBankAccount(
         accountNumber: _accountNumberController.text,
         ifscCode: _ifscController.text,

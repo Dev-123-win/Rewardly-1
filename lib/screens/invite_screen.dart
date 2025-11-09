@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:iconsax/iconsax.dart';
-import '../providers/user_provider.dart';
+import '../providers/user_provider_new.dart';
 import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
 
@@ -13,7 +13,7 @@ class InviteScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
+    final userProvider = Provider.of<UserProviderNew>(context);
     final String referralCode = userProvider.currentUser?.referralCode ?? 'Generating...';
 
     final isDesktop = ResponsiveUtils.isDesktop(context);
@@ -283,7 +283,7 @@ class InviteScreen extends StatelessWidget {
                 ),
                 SizedBox(height: isDesktop ? 16 : 8),
                 Expanded(
-                  child: userProvider.referredUsers.isEmpty
+                  child: (userProvider.currentUser?.referredUsers ?? []).isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -389,10 +389,10 @@ class InviteScreen extends StatelessWidget {
                           ),
                         )
                       : ListView.builder(
-                          itemCount: userProvider.referredUsers.length,
+                          itemCount: userProvider.currentUser!.referredUsers.length,
                           itemBuilder: (context, index) {
                             final Map<String, dynamic> referredUser =
-                                userProvider.referredUsers[index];
+                                userProvider.currentUser!.referredUsers[index];
                             final int activeDays =
                                 referredUser['refereeActiveDays'] ?? 0;
                             final bool rewarded =

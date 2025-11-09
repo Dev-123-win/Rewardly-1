@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'onboarding_screen.dart';
-import 'home_screen_new.dart';
+import 'main_container_screen.dart';
 import 'dart:math' as math;
 
 class SplashScreen extends StatefulWidget {
@@ -75,14 +75,19 @@ class _SplashScreenState extends State<SplashScreen>
 
     if (!mounted) return;
 
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    // Check if user exists in SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final hasUser = prefs.containsKey('current_user');
+
+    if (!hasUser) {
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const OnboardingScreen()),
       );
     } else {
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const MainContainerScreen()),
       );
     }
   }

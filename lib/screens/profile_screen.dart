@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 import '../providers/auth_provider.dart';
-import '../providers/user_provider.dart';
+import '../providers/user_provider_new.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
@@ -18,7 +18,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final userProvider = Provider.of<UserProvider>(context);
+    final userProvider = Provider.of<UserProviderNew>(context);
     final currentUser = userProvider.currentUser;
     final screenWidth = MediaQuery.of(context).size.width;
     final padding = ResponsiveUtils.getResponsivePadding(context);

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
-import '../providers/user_provider.dart';
+import '../providers/user_provider_new.dart';
 import '../providers/ad_provider_new.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/tic_tac_toe_stats_dialog.dart';
@@ -42,10 +42,11 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
   }
 
   Future<void> _loadGameStats() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString('current_user');
+    if (userJson == null) return;
 
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
     final todayString = DateTime.now().toIso8601String().substring(0, 10);
     final todayStats = userProvider.currentUser?.dailyStats[todayString] ?? {};
     final todayGames = todayStats['tictactoePlayed'] ?? 0;
@@ -258,7 +259,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     });
 
     // Update stats before showing dialog
-    final provider = Provider.of<UserProvider>(context, listen: false);
+    final provider = Provider.of<UserProviderNew>(context, listen: false);
     final todayString = DateTime.now().toIso8601String().substring(0, 10);
     final todayStats = provider.currentUser?.dailyStats[todayString] ?? {};
 

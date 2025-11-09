@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 import '../models/ad_milestone.dart';
 import '../providers/ad_provider_new.dart';
-import '../providers/user_provider.dart';
+import '../providers/user_provider_new.dart';
 import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
 
@@ -30,7 +30,7 @@ class _WatchAdsScreenState extends State<WatchAdsScreen> {
     BuildContext context,
     AdMilestone milestone,
     AdProviderNew adProvider,
-    UserProvider userProvider,
+    UserProviderNew userProvider,
     bool isDesktop,
     ColorScheme colorScheme,
   ) {
@@ -163,7 +163,7 @@ class _WatchAdsScreenState extends State<WatchAdsScreen> {
 
   Widget _buildMainContent(
     BuildContext context,
-    UserProvider userProvider,
+    UserProviderNew userProvider,
     AdProviderNew adProvider,
   ) {
     final isDesktop = ResponsiveUtils.isDesktop(context);
@@ -325,7 +325,7 @@ class _WatchAdsScreenState extends State<WatchAdsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
+    final userProvider = Provider.of<UserProviderNew>(context);
     final adProvider = Provider.of<AdProviderNew>(context);
     final isDesktop = ResponsiveUtils.isDesktop(context);
     final screenWidth = MediaQuery.of(context).size.width;

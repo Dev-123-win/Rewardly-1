@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
-import '../providers/user_provider.dart';
+import '../providers/user_provider_new.dart';
 import '../providers/ad_provider_new.dart';
 import '../widgets/custom_app_bar.dart';
 
@@ -25,7 +25,7 @@ class _DailyBonusScreenState extends State<DailyBonusScreen> {
     });
 
     final adProvider = Provider.of<AdProviderNew>(context, listen: false);
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
 
     // Show rewarded ad
     if (adProvider.rewardedAd != null) {
@@ -211,7 +211,7 @@ class _DailyBonusScreenState extends State<DailyBonusScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final userProvider = Provider.of<UserProvider>(context);
+    final userProvider = Provider.of<UserProviderNew>(context);
     final currentStreak = userProvider.currentUser?.dailyStreak ?? 1;
     final today = DateTime.now().toIso8601String().substring(0, 10);
     final hasClaimedToday =

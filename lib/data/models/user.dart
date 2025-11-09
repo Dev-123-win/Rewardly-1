@@ -1,39 +1,84 @@
+import 'package:flutter/foundation.dart';
+
+@immutable
 class User {
   final String uid;
   final String? email;
   final String? displayName;
   final String? photoURL;
-  final String? referralCode;
+  final String referralCode;
   final String? referredBy;
   final int coins;
   final int totalEarned;
   final int totalWithdrawn;
   final List<String> activeDays;
-  final DateTime? lastActiveDate;
+  final DateTime lastActiveDate;
   final Map<String, dynamic> dailyStats;
-  final Map<String, dynamic>? withdrawalInfo;
-  final int dailyStreak;
-  final DateTime? lastStreakDate;
-  final List<Map<String, dynamic>> paymentMethods;
+  final List<Map<String, dynamic>> paymentMethods; // Added
+  final Map<String, dynamic>? withdrawalInfo; // Added
+  final int dailyStreak; // Added
+  final DateTime? lastStreakDate; // Added
+  final List<Map<String, dynamic>> referredUsers; // Added
 
-  User({
+  const User({
     required this.uid,
     this.email,
     this.displayName,
     this.photoURL,
-    this.referralCode,
+    required this.referralCode,
     this.referredBy,
     this.coins = 0,
     this.totalEarned = 0,
     this.totalWithdrawn = 0,
     this.activeDays = const [],
-    this.lastActiveDate,
+    required this.lastActiveDate,
     this.dailyStats = const {},
-    this.withdrawalInfo,
-    this.dailyStreak = 1,
-    this.lastStreakDate,
-    this.paymentMethods = const [],
+    this.paymentMethods = const [], // Added
+    this.withdrawalInfo, // Added
+    this.dailyStreak = 0, // Added
+    this.lastStreakDate, // Added
+    this.referredUsers = const [], // Added
   });
+
+  User copyWith({
+    String? uid,
+    String? email,
+    String? displayName,
+    String? photoURL,
+    String? referralCode,
+    String? referredBy,
+    int? coins,
+    int? totalEarned,
+    int? totalWithdrawn,
+    List<String>? activeDays,
+    DateTime? lastActiveDate,
+    Map<String, dynamic>? dailyStats,
+    List<Map<String, dynamic>>? paymentMethods, // Added
+    Map<String, dynamic>? withdrawalInfo, // Added
+    int? dailyStreak, // Added
+    DateTime? lastStreakDate, // Added
+    List<Map<String, dynamic>>? referredUsers, // Added
+  }) {
+    return User(
+      uid: uid ?? this.uid,
+      email: email ?? this.email,
+      displayName: displayName ?? this.displayName,
+      photoURL: photoURL ?? this.photoURL,
+      referralCode: referralCode ?? this.referralCode,
+      referredBy: referredBy ?? this.referredBy,
+      coins: coins ?? this.coins,
+      totalEarned: totalEarned ?? this.totalEarned,
+      totalWithdrawn: totalWithdrawn ?? this.totalWithdrawn,
+      activeDays: activeDays ?? this.activeDays,
+      lastActiveDate: lastActiveDate ?? this.lastActiveDate,
+      dailyStats: dailyStats ?? this.dailyStats,
+      paymentMethods: paymentMethods ?? this.paymentMethods, // Added
+      withdrawalInfo: withdrawalInfo ?? this.withdrawalInfo, // Added
+      dailyStreak: dailyStreak ?? this.dailyStreak, // Added
+      lastStreakDate: lastStreakDate ?? this.lastStreakDate, // Added
+      referredUsers: referredUsers ?? this.referredUsers, // Added
+    );
+  }
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -41,26 +86,29 @@ class User {
       email: json['email'] as String?,
       displayName: json['displayName'] as String?,
       photoURL: json['photoURL'] as String?,
-      referralCode: json['referralCode'] as String?,
+      referralCode: json['referralCode'] as String,
       referredBy: json['referredBy'] as String?,
-      coins: json['coins'] as int? ?? 0,
-      totalEarned: json['totalEarned'] as int? ?? 0,
-      totalWithdrawn: json['totalWithdrawn'] as int? ?? 0,
-      activeDays: List<String>.from(json['activeDays'] ?? []),
-      lastActiveDate: json['lastActiveDate'] != null
-          ? DateTime.parse(json['lastActiveDate'])
-          : null,
-      dailyStats: Map<String, dynamic>.from(json['dailyStats'] ?? {}),
-      withdrawalInfo: json['withdrawalInfo'] != null
-          ? Map<String, dynamic>.from(json['withdrawalInfo'])
-          : null,
-      dailyStreak: json['dailyStreak'] as int? ?? 1,
+      coins: json['coins'] as int,
+      totalEarned: json['totalEarned'] as int,
+      totalWithdrawn: json['totalWithdrawn'] as int,
+      activeDays: (json['activeDays'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      lastActiveDate: DateTime.parse(json['lastActiveDate'] as String),
+      dailyStats: json['dailyStats'] as Map<String, dynamic>,
+      paymentMethods: (json['paymentMethods'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          const [], // Added
+      withdrawalInfo: json['withdrawalInfo'] as Map<String, dynamic>?, // Added
+      dailyStreak: json['dailyStreak'] as int? ?? 0, // Added
       lastStreakDate: json['lastStreakDate'] != null
-          ? DateTime.parse(json['lastStreakDate'])
-          : null,
-      paymentMethods: List<Map<String, dynamic>>.from(
-        json['paymentMethods'] ?? [],
-      ),
+          ? DateTime.parse(json['lastStreakDate'] as String)
+          : null, // Added
+      referredUsers: (json['referredUsers'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          const [], // Added
     );
   }
 
@@ -76,50 +124,13 @@ class User {
       'totalEarned': totalEarned,
       'totalWithdrawn': totalWithdrawn,
       'activeDays': activeDays,
-      'lastActiveDate': lastActiveDate?.toIso8601String(),
+      'lastActiveDate': lastActiveDate.toIso8601String(),
       'dailyStats': dailyStats,
-      'withdrawalInfo': withdrawalInfo,
-      'dailyStreak': dailyStreak,
-      'lastStreakDate': lastStreakDate?.toIso8601String(),
-      'paymentMethods': paymentMethods,
+      'paymentMethods': paymentMethods, // Added
+      'withdrawalInfo': withdrawalInfo, // Added
+      'dailyStreak': dailyStreak, // Added
+      'lastStreakDate': lastStreakDate?.toIso8601String(), // Added
+      'referredUsers': referredUsers, // Added
     };
-  }
-
-  User copyWith({
-    String? uid,
-    String? email,
-    String? displayName,
-    String? photoURL,
-    String? referralCode,
-    String? referredBy,
-    int? coins,
-    int? totalEarned,
-    int? totalWithdrawn,
-    List<String>? activeDays,
-    DateTime? lastActiveDate,
-    Map<String, dynamic>? dailyStats,
-    Map<String, dynamic>? withdrawalInfo,
-    int? dailyStreak,
-    DateTime? lastStreakDate,
-    List<Map<String, dynamic>>? paymentMethods,
-  }) {
-    return User(
-      uid: uid ?? this.uid,
-      email: email ?? this.email,
-      displayName: displayName ?? this.displayName,
-      photoURL: photoURL ?? this.photoURL,
-      referralCode: referralCode ?? this.referralCode,
-      referredBy: referredBy ?? this.referredBy,
-      coins: coins ?? this.coins,
-      totalEarned: totalEarned ?? this.totalEarned,
-      totalWithdrawn: totalWithdrawn ?? this.totalWithdrawn,
-      activeDays: activeDays ?? this.activeDays,
-      lastActiveDate: lastActiveDate ?? this.lastActiveDate,
-      dailyStats: dailyStats ?? this.dailyStats,
-      withdrawalInfo: withdrawalInfo ?? this.withdrawalInfo,
-      dailyStreak: dailyStreak ?? this.dailyStreak,
-      lastStreakDate: lastStreakDate ?? this.lastStreakDate,
-      paymentMethods: paymentMethods ?? this.paymentMethods,
-    );
   }
 }

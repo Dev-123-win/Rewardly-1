@@ -6,12 +6,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/user.dart' as app_models;
-import 'user_provider.dart'; // Reverted to user_provider.dart
+import 'user_provider_new.dart';
 
 class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final UserProvider _userProvider; // Reverted to UserProvider
+  final UserProviderNew _userProvider;
 
   AuthProvider(this._userProvider);
 

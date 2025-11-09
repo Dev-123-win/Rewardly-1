@@ -1,506 +1,160 @@
 import 'dart:convert';
-import 'package:firebase_auth/firebase_auth.dart' as auth;
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/user.dart';
-import '../data/repositories/local_transaction_repository.dart';
-import '../providers/config_provider.dart';
-import '../models/payment_method.dart';
-
-const String kUserPrefix = 'user_';
-const String kDailyStatsKey = 'daily_stats';
-const String kLocalWritesCountKey = 'local_writes_count';
-const String kLocalReadsCountKey = 'local_reads_count';
-const String kLastSyncDateKey = 'last_sync_date';
-
-class UserProvider with ChangeNotifier {
-  final ConfigProvider? configProvider;
-  late SharedPreferences _prefs;
-  LocalTransactionRepository? _transactionRepo;
+import '../models/payment_method.dart'; // Added
+class UserProviderNew with ChangeNotifier {
   User? _currentUser;
-  Map<String, dynamic> _localDailyStats = {};
-  int _localWritesCount = 0;
-  int _localReadsCount = 0;
-  String _lastSyncDate = '';
+
+  UserProviderNew() {
+    _init();
+  }
 
   User? get currentUser => _currentUser;
-  LocalTransactionRepository? get transactionRepo => _transactionRepo;
+
   set currentUser(User? user) {
     _currentUser = user;
     notifyListeners();
   }
 
-  // Getter for referred users
-  List<Map<String, dynamic>> get referredUsers {
-    final user = auth.FirebaseAuth.instance.currentUser;
-    if (user == null) return [];
-    final referralsKey = 'referrals_${user.uid}';
-    final referralsJson = _prefs.getString(referralsKey);
-    if (referralsJson == null) return [];
-    return List<Map<String, dynamic>>.from(json.decode(referralsJson));
-  }
-
-  UserProvider({this.configProvider}) {
-    _initPrefs();
-  }
-
-  Future<void> _initPrefs() async {
-    _prefs = await SharedPreferences.getInstance();
-    _transactionRepo = LocalTransactionRepository(_prefs);
+  Future<void> _init() async {
     await loadCurrentUser();
-    await _loadLocalData(); // Load local data on startup
   }
 
   Future<void> loadCurrentUser() async {
-    final user = auth.FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      _currentUser = null;
-      notifyListeners();
-      return;
-    }
-
-    final userData = _prefs.getString('$kUserPrefix${user.uid}');
+    final prefs = await SharedPreferences.getInstance();
+    final userData = prefs.getString('current_user');
     if (userData != null) {
-      _currentUser = User.fromJson(jsonDecode(userData));
-      notifyListeners();
+      _currentUser = User.fromJson(json.decode(userData));
+    } else {
+      _currentUser = null;
     }
+    notifyListeners();
   }
 
   Future<void> saveCurrentUser() async {
+    final prefs = await SharedPreferences.getInstance();
     if (_currentUser != null) {
-      await _prefs.setString(
-        '$kUserPrefix${_currentUser!.uid}',
-        json.encode(_currentUser!.toJson()),
-      );
-    }
-  }
-
-  Future<void> updatePaymentMethod(PaymentMethod method) async {
-    if (_currentUser == null) return;
-
-    var updatedMethods = List<Map<String, dynamic>>.from(
-      _currentUser!.paymentMethods,
-    );
-
-    // Remove existing method of the same type if it exists
-    updatedMethods.removeWhere((m) => m['type'] == method.type);
-
-    // Add the new method
-    updatedMethods.add(method.toJson());
-
-    _currentUser = _currentUser!.copyWith(paymentMethods: updatedMethods);
-    await saveCurrentUser();
-    notifyListeners();
-  }
-
-  PaymentMethod? getPaymentMethod(String type) {
-    if (_currentUser == null) return null;
-
-    final methodJson = _currentUser!.paymentMethods.firstWhere(
-      (m) => m['type'] == type,
-      orElse: () => {},
-    );
-
-    if (methodJson.isEmpty) return null;
-
-    return PaymentMethod.fromJson(methodJson);
-  }
-
-  Future<void> saveWithdrawalInfo(Map<String, dynamic> withdrawalInfo) async {
-    final user = auth.FirebaseAuth.instance.currentUser;
-    if (user == null || _currentUser == null) return;
-
-    _currentUser = _currentUser!.copyWith(withdrawalInfo: withdrawalInfo);
-    await saveCurrentUser();
-    notifyListeners();
-  }
-
-  void clearUserData() {
-    _currentUser = null;
-    _localDailyStats = {};
-    _localWritesCount = 0;
-    _localReadsCount = 0;
-    _lastSyncDate = '';
-
-    final String? currentUid = auth.FirebaseAuth.instance.currentUser?.uid;
-    if (currentUid != null) {
-      _prefs.remove('$kUserPrefix$currentUid');
-    }
-    _prefs.remove(kDailyStatsKey);
-    _prefs.remove(kLocalWritesCountKey);
-    _prefs.remove(kLocalReadsCountKey);
-    _prefs.remove(kLastSyncDateKey);
-
-    notifyListeners();
-  }
-
-  Future<void> redeemReferralCode(String code) async {
-    final user = auth.FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception("User not logged in.");
-    if (_currentUser == null) throw Exception("User data not loaded.");
-
-    // Check if the user has already redeemed a code
-    if (_currentUser!.referredBy != null &&
-        _currentUser!.referredBy!.isNotEmpty) {
-      throw Exception("You have already redeemed a referral code.");
-    }
-
-    // Get all users from local storage to find referrer
-    final allUserKeys = _prefs.getKeys().where(
-      (key) => key.startsWith(kUserPrefix),
-    );
-    String? referrerId;
-    User? referrer;
-
-    for (final key in allUserKeys) {
-      final userData = json.decode(_prefs.getString(key) ?? '{}');
-      if (userData['referralCode'] == code) {
-        referrer = User.fromJson(userData);
-        referrerId = referrer.uid;
-        break;
-      }
-    }
-
-    if (referrerId == null || referrer == null) {
-      throw Exception("Invalid referral code.");
-    }
-
-    if (referrerId == user.uid) {
-      throw Exception("Cannot redeem your own referral code.");
-    }
-
-    // Get referral bonus from config provider or use default
-    final int refereeBonus =
-        configProvider?.getConfig('rewards.refereeBonus', defaultValue: 200) ??
-        200;
-
-    // Update current user
-    _currentUser = _currentUser!.copyWith(
-      referredBy: code,
-      coins: _currentUser!.coins + refereeBonus,
-      totalEarned: _currentUser!.totalEarned + refereeBonus,
-    );
-    await saveCurrentUser();
-
-    // Save referral relationship
-    final referral = {
-      'referrerId': referrerId,
-      'refereeId': user.uid,
-      'refereeActiveDays': 0,
-      'referrerRewarded': false,
-      'refereeRewarded': true,
-      'createdAt': DateTime.now().toIso8601String(),
-      'completedAt': null,
-    };
-
-    final referralsKey = 'referrals_${user.uid}';
-    final referrals = List<Map<String, dynamic>>.from(
-      json.decode(_prefs.getString(referralsKey) ?? '[]'),
-    );
-    referrals.add(referral);
-    await _prefs.setString(referralsKey, json.encode(referrals));
-
-    // Add transaction for the referee
-    await _transactionRepo?.addTransaction(
-      userId: user.uid,
-      type: 'earning',
-      subType: 'referral',
-      amount: refereeBonus,
-      metadata: {'referrerId': referrerId, 'referralCode': code},
-    );
-
-    notifyListeners();
-  }
-
-  Future<void> updateActiveDays() async {
-    final user = auth.FirebaseAuth.instance.currentUser;
-    if (user == null || _currentUser == null) return;
-
-    final today = DateTime.now();
-    final todayString = today.toIso8601String().substring(0, 10);
-
-    if (_currentUser!.lastActiveDate?.toIso8601String().substring(0, 10) ==
-        todayString) {
-      return;
-    }
-
-    // Update active days for current user
-    List<String> activeDays = List<String>.from(_currentUser!.activeDays);
-    if (!activeDays.contains(todayString)) {
-      activeDays.add(todayString);
-      _currentUser = _currentUser!.copyWith(
-        activeDays: activeDays,
-        lastActiveDate: today,
-      );
-      await saveCurrentUser();
-
-      // Check if this user was referred and update refereeActiveDays
-      if (_currentUser!.referredBy != null &&
-          _currentUser!.referredBy!.isNotEmpty) {
-        final referralsKey = 'referrals_${user.uid}';
-        final referrals = List<Map<String, dynamic>>.from(
-          json.decode(_prefs.getString(referralsKey) ?? '[]'),
-        );
-
-        // Find the referral record where user is referee and not yet completed
-        final referralIndex = referrals.indexWhere(
-          (r) => r['refereeId'] == user.uid && r['referrerRewarded'] == false,
-        );
-
-        if (referralIndex != -1) {
-          final referral = referrals[referralIndex];
-          final currentActiveDays = referral['refereeActiveDays'] ?? 0;
-
-          if (currentActiveDays < 3) {
-            // Update referral record
-            referrals[referralIndex]['refereeActiveDays'] =
-                currentActiveDays + 1;
-
-            if (currentActiveDays + 1 == 3) {
-              // Award referrer bonus when reaching 3 active days
-              final referrerId = referral['referrerId'];
-              final referrerKey = '$kUserPrefix$referrerId';
-              final referrerJson = _prefs.getString(referrerKey);
-
-              if (referrerJson != null) {
-                final referrerData = json.decode(referrerJson);
-                final referrer = User.fromJson(referrerData);
-
-                final int referrerBonus =
-                    configProvider?.getConfig(
-                      'rewards.referrerBonus',
-                      defaultValue: 500,
-                    ) ??
-                    500;
-
-                // Update referrer's balance
-                final updatedReferrer = referrer.copyWith(
-                  coins: referrer.coins + referrerBonus,
-                  totalEarned: referrer.totalEarned + referrerBonus,
-                );
-                await _prefs.setString(
-                  referrerKey,
-                  json.encode(updatedReferrer.toJson()),
-                );
-
-                // Mark referral as completed
-                referrals[referralIndex]['referrerRewarded'] = true;
-                referrals[referralIndex]['completedAt'] = DateTime.now()
-                    .toIso8601String();
-
-                // Create transaction for referrer
-                await _transactionRepo?.addTransaction(
-                  userId: referrerId,
-                  type: 'earning',
-                  subType: 'referral_bonus',
-                  amount: referrerBonus,
-                  metadata: {
-                    'refereeId': user.uid,
-                    'referralCode': _currentUser!.referredBy,
-                  },
-                );
-              }
-            }
-
-            // Save updated referrals
-            await _prefs.setString(referralsKey, json.encode(referrals));
-          }
-        }
-      }
-
-      notifyListeners();
-    }
-  }
-
-  Future<void> _loadLocalData() async {
-    final String today = DateTime.now().toIso8601String().substring(0, 10);
-
-    _lastSyncDate = _prefs.getString(kLastSyncDateKey) ?? '';
-    final String? dailyStatsJson = _prefs.getString(kDailyStatsKey);
-    final String? localWritesCount = _prefs.getString(kLocalWritesCountKey);
-    final String? localReadsCount = _prefs.getString(kLocalReadsCountKey);
-
-    if (dailyStatsJson != null) {
-      _localDailyStats = jsonDecode(dailyStatsJson);
+      await prefs.setString('current_user', json.encode(_currentUser!.toJson()));
     } else {
-      _localDailyStats = {};
-    }
-
-    _localWritesCount = int.tryParse(localWritesCount ?? '0') ?? 0;
-    _localReadsCount = int.tryParse(localReadsCount ?? '0') ?? 0;
-
-    // Reset daily stats if it's a new day
-    if (_lastSyncDate != today) {
-      _localDailyStats = {};
-      _localWritesCount = 0;
-      _localReadsCount = 0;
-      _lastSyncDate = today;
-      await _saveLocalData(); // Save the reset data
+      await prefs.remove('current_user');
     }
     notifyListeners();
   }
 
-  Future<void> _saveLocalData() async {
-    await _prefs.setString(kDailyStatsKey, jsonEncode(_localDailyStats));
-    await _prefs.setString(kLocalWritesCountKey, _localWritesCount.toString());
-    await _prefs.setString(kLocalReadsCountKey, _localReadsCount.toString());
-    await _prefs.setString(kLastSyncDateKey, _lastSyncDate);
-  }
-
-  void incrementReadsCount() {
-    _localReadsCount++;
-    _saveLocalData();
+  Future<void> clearUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('current_user');
+    _currentUser = null;
     notifyListeners();
   }
 
-  void incrementWritesCount() {
-    _localWritesCount++;
-    _saveLocalData();
-    notifyListeners();
-  }
-
-  Future<void> resetDailyStreak() async {
-    if (_currentUser == null) return;
-
-    _currentUser = _currentUser!.copyWith(
-      dailyStreak: 1,
-      lastStreakDate: DateTime.now(),
-    );
-    await saveCurrentUser();
-    notifyListeners();
-  }
-
-  Future<void> incrementDailyStreak() async {
-    if (_currentUser == null) return;
-
-    _currentUser = _currentUser!.copyWith(
-      dailyStreak: _currentUser!.dailyStreak + 1,
-      lastStreakDate: DateTime.now(),
-    );
-    await saveCurrentUser();
-    notifyListeners();
-  }
-
-  Future<void> claimDailyReward(int dailyRewardAmount) async {
-    final user = auth.FirebaseAuth.instance.currentUser;
-    if (user == null || _currentUser == null) return;
-
-    final today = DateTime.now();
-    final todayString = today.toIso8601String().substring(0, 10);
-    final Map<String, dynamic> todayStats =
-        _currentUser!.dailyStats[todayString] ?? {};
-    final bool dailyRewardClaimed = todayStats['dailyBonusClaimed'] ?? false;
-
-    if (dailyRewardClaimed) {
-      throw Exception("Daily reward already claimed today.");
+  // Example of updating user data
+  Future<void> updateCoins(int amount) async {
+    if (_currentUser != null) {
+      _currentUser = _currentUser!.copyWith(coins: _currentUser!.coins + amount);
+      await saveCurrentUser();
     }
-
-    // Check streak continuity
-    final lastStreakDate = _currentUser!.lastStreakDate;
-    final yesterday = DateTime.now().subtract(const Duration(days: 1));
-    final yesterdayString = yesterday.toIso8601String().substring(0, 10);
-
-    if (lastStreakDate != null) {
-      final lastClaimDate = lastStreakDate.toIso8601String().substring(0, 10);
-      if (lastClaimDate != yesterdayString) {
-        // Streak broken, reset to 1
-        await resetDailyStreak();
-      }
-    }
-
-    // Update local daily stats
-    _localDailyStats[todayString] = {
-      ...(_localDailyStats[todayString] ?? {}),
-      'dailyBonusClaimed': true,
-    };
-    incrementWritesCount();
-
-    // Update user data
-    Map<String, dynamic> updatedDailyStats = Map<String, dynamic>.from(
-      _currentUser!.dailyStats,
-    );
-    updatedDailyStats[todayString] = {
-      ...(updatedDailyStats[todayString] ?? {}),
-      'dailyBonusClaimed': true,
-    };
-
-    List<String> activeDays = List<String>.from(_currentUser!.activeDays);
-    if (!activeDays.contains(todayString)) {
-      activeDays.add(todayString);
-    }
-
-    _currentUser = _currentUser!.copyWith(
-      coins: _currentUser!.coins + dailyRewardAmount,
-      totalEarned: _currentUser!.totalEarned + dailyRewardAmount,
-      lastActiveDate: today,
-      activeDays: activeDays,
-      dailyStats: updatedDailyStats,
-      lastStreakDate: today,
-    );
-    await saveCurrentUser();
-
-    // Create transaction record
-    await _transactionRepo?.addTransaction(
-      userId: user.uid,
-      type: 'earning',
-      subType: 'daily_reward',
-      amount: dailyRewardAmount,
-      metadata: {'date': todayString},
-    );
-
-    notifyListeners();
   }
 
   Future<void> recordGameReward({
     required String gameType,
     required int amount,
-    int? dailyLimit,
+    int? dailyLimit, // Added dailyLimit parameter
   }) async {
-    final user = auth.FirebaseAuth.instance.currentUser;
-    if (user == null || _currentUser == null) return;
+    if (_currentUser != null) {
+      final today = DateTime.now().toIso8601String().substring(0, 10);
+      final updatedDailyStats = Map<String, dynamic>.from(_currentUser!.dailyStats);
 
-    final today = DateTime.now();
-    final todayString = today.toIso8601String().substring(0, 10);
-    final todayStats = _currentUser!.dailyStats[todayString] ?? {};
-    final gamesPlayedToday = todayStats['${gameType}Played'] ?? 0;
+      updatedDailyStats.update(
+        today,
+        (value) => {
+          ...value,
+          'coinsEarned': (value['coinsEarned'] ?? 0) + amount,
+          'gamesPlayed': (value['gamesPlayed'] ?? 0) + 1,
+          if (gameType == 'dailyBonus') 'dailyBonusClaimed': true,
+        },
+        ifAbsent: () => {
+          'coinsEarned': amount,
+          'gamesPlayed': 1,
+          if (gameType == 'dailyBonus') 'dailyBonusClaimed': true,
+        },
+      );
 
-    if (dailyLimit != null && gamesPlayedToday >= dailyLimit) {
-      throw Exception('Daily limit reached for $gameType');
+      _currentUser = _currentUser!.copyWith(
+        coins: _currentUser!.coins + amount,
+        totalEarned: _currentUser!.totalEarned + amount,
+        dailyStats: updatedDailyStats,
+      );
+      await saveCurrentUser();
     }
+  }
 
-    // Update local daily stats
-    _localDailyStats[todayString] = {
-      ...(_localDailyStats[todayString] ?? {}),
-      '${gameType}Played': gamesPlayedToday + 1,
-    };
-    incrementWritesCount();
+  Future<void> resetDailyStreak() async {
+    if (_currentUser != null) {
+      _currentUser = _currentUser!.copyWith(
+        dailyStreak: 0,
+        lastStreakDate: null,
+      );
+      await saveCurrentUser();
+    }
+  }
 
-    // Update user data
-    Map<String, dynamic> updatedDailyStats = Map<String, dynamic>.from(
-      _currentUser!.dailyStats,
-    );
-    updatedDailyStats[todayString] = {
-      ...(updatedDailyStats[todayString] ?? {}),
-      '${gameType}Played': gamesPlayedToday + 1,
-    };
+  Future<void> incrementDailyStreak() async {
+    if (_currentUser != null) {
+      final now = DateTime.now();
+      final lastStreakDate = _currentUser!.lastStreakDate;
 
-    _currentUser = _currentUser!.copyWith(
-      coins: _currentUser!.coins + amount,
-      totalEarned: _currentUser!.totalEarned + amount,
-      dailyStats: updatedDailyStats,
-    );
-    await saveCurrentUser();
+      if (lastStreakDate == null ||
+          now.difference(lastStreakDate).inDays > 1) {
+        // Reset streak if more than one day has passed
+        _currentUser = _currentUser!.copyWith(
+          dailyStreak: 1,
+          lastStreakDate: now,
+        );
+      } else if (now.difference(lastStreakDate).inDays == 1) {
+        // Increment streak if it's the next day
+        _currentUser = _currentUser!.copyWith(
+          dailyStreak: _currentUser!.dailyStreak + 1,
+          lastStreakDate: now,
+        );
+      } else if (now.difference(lastStreakDate).inDays == 0) {
+        // Do nothing if already claimed today
+      }
+      await saveCurrentUser();
+    }
+  }
 
-    // Create transaction record
-    await _transactionRepo?.addTransaction(
-      userId: user.uid,
-      type: 'earning',
-      subType: gameType,
-      amount: amount,
-      metadata: {'date': todayString, 'gameCount': gamesPlayedToday + 1},
-    );
 
-    notifyListeners();
+  Future<void> updatePaymentMethod(PaymentMethod method) async {
+    if (_currentUser != null) {
+      final updatedMethods = List<Map<String, dynamic>>.from(_currentUser!.paymentMethods);
+      final index = updatedMethods.indexWhere((m) => m['type'] == method.type);
+
+      if (index != -1) {
+        updatedMethods[index] = method.toJson();
+      } else {
+        updatedMethods.add(method.toJson());
+      }
+
+      _currentUser = _currentUser!.copyWith(paymentMethods: updatedMethods);
+      await saveCurrentUser();
+    }
+  }
+
+  // Example of updating withdrawal info
+  Future<void> updateWithdrawalInfo(Map<String, dynamic> info) async {
+    if (_currentUser != null) {
+      _currentUser = _currentUser!.copyWith(withdrawalInfo: info);
+      await saveCurrentUser();
+    }
+  }
+
+  Future<void> saveWithdrawalInfo(Map<String, dynamic> info) async {
+    if (_currentUser != null) {
+      _currentUser = _currentUser!.copyWith(withdrawalInfo: info);
+      await saveCurrentUser();
+    }
   }
 
   Future<void> requestWithdrawal({
@@ -509,8 +163,7 @@ class UserProvider with ChangeNotifier {
     required Map<String, dynamic> details,
     required int minWithdrawalCoins,
   }) async {
-    final user = auth.FirebaseAuth.instance.currentUser;
-    if (user == null || _currentUser == null) {
+    if (_currentUser == null) {
       throw Exception("User not found");
     }
 
@@ -524,49 +177,33 @@ class UserProvider with ChangeNotifier {
       throw Exception("Insufficient coin balance for withdrawal.");
     }
 
-    // Update user data
+    // For simplicity, we'll just update the user's balance and total withdrawn
+    // In a real app, this would involve a backend call and transaction processing
     _currentUser = _currentUser!.copyWith(
       coins: _currentUser!.coins - amount,
       totalWithdrawn: _currentUser!.totalWithdrawn + amount,
       withdrawalInfo: details,
     );
+
     await saveCurrentUser();
-
-    // Create transaction record
-    await _transactionRepo?.addTransaction(
-      userId: user.uid,
-      type: 'withdrawal',
-      subType: method,
-      amount: -amount,
-      metadata: details,
-    );
-
     notifyListeners();
   }
 
   Future<void> recordAdWatch(int rewardAmount) async {
-    final user = auth.FirebaseAuth.instance.currentUser;
-    if (user == null || _currentUser == null) return;
+    if (_currentUser == null) return;
 
     final today = DateTime.now();
     final todayString = today.toIso8601String().substring(0, 10);
     final todayStats = _currentUser!.dailyStats[todayString] ?? {};
     final adsWatchedToday = todayStats['adsWatched'] ?? 0;
 
-    // Update local daily stats
-    _localDailyStats[todayString] = {
-      ...(_localDailyStats[todayString] ?? {}),
-      'adsWatched': adsWatchedToday + 1,
-    };
-    incrementWritesCount();
-
-    // Update user data
     Map<String, dynamic> updatedDailyStats = Map<String, dynamic>.from(
       _currentUser!.dailyStats,
     );
     updatedDailyStats[todayString] = {
       ...(updatedDailyStats[todayString] ?? {}),
       'adsWatched': adsWatchedToday + 1,
+      'adCoins': (todayStats['adCoins'] ?? 0) + rewardAmount,
     };
 
     _currentUser = _currentUser!.copyWith(
@@ -574,57 +211,8 @@ class UserProvider with ChangeNotifier {
       totalEarned: _currentUser!.totalEarned + rewardAmount,
       dailyStats: updatedDailyStats,
     );
+
     await saveCurrentUser();
-
-    // Create transaction record
-    await _transactionRepo?.addTransaction(
-      userId: user.uid,
-      type: 'earning',
-      subType: 'ad_watch',
-      amount: rewardAmount,
-      metadata: {'date': todayString, 'adCount': adsWatchedToday + 1},
-    );
-
     notifyListeners();
-  }
-
-  Future<void> runDailyReconciliation() async {
-    final user = auth.FirebaseAuth.instance.currentUser;
-    if (user == null || _currentUser == null) return;
-
-    final String userId = user.uid;
-    final int localCoins = _currentUser!.coins;
-    final int localTotalWithdrawn = _currentUser!.totalWithdrawn;
-
-    // Get transactions from local storage
-    final transactions = _transactionRepo?.getTransactions(userId: userId);
-    if (transactions == null) return;
-
-    // Calculate balance from transactions
-    int calculatedCoins = 0;
-    int calculatedWithdrawn = 0;
-
-    for (var transaction in transactions) {
-      final int amount = transaction['amount'] ?? 0;
-      final String type = transaction['type'] ?? '';
-
-      if (type == 'earning') {
-        calculatedCoins += amount;
-      } else if (type == 'withdrawal') {
-        calculatedCoins += amount; // Amount is negative for withdrawals
-        calculatedWithdrawn += -amount;
-      }
-    }
-
-    // Update user data if there's a mismatch
-    if (calculatedCoins != localCoins ||
-        calculatedWithdrawn != localTotalWithdrawn) {
-      _currentUser = _currentUser!.copyWith(
-        coins: calculatedCoins,
-        totalWithdrawn: calculatedWithdrawn,
-      );
-      await saveCurrentUser();
-      notifyListeners();
-    }
   }
 }
