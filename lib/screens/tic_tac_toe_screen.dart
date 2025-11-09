@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../providers/ad_provider.dart';
 import '../providers/user_provider.dart';
 import '../providers/config_provider.dart';
+import '../providers/ad_provider_new.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/tic_tac_toe_stats_dialog.dart';
 import '../models/tic_tac_toe_history.dart';
@@ -36,7 +36,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     super.initState();
     _loadGameStats();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AdProvider>(context, listen: false).loadRewardedAd();
+      Provider.of<AdProviderNew>(context, listen: false).loadRewardedAd();
     });
   }
 
@@ -45,8 +45,9 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     if (user == null) return;
 
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final todayStats = userProvider.todayStats;
-    final todayGames = todayStats['tictactoeGames'] ?? 0;
+    final todayString = DateTime.now().toIso8601String().substring(0, 10);
+    final todayStats = userProvider.currentUser?.dailyStats[todayString] ?? {};
+    final todayGames = todayStats['tictactoePlayed'] ?? 0;
     final coins = todayStats['tictactoeCoins'] ?? 0;
 
     // Load game history from shared preferences or local storage
@@ -195,9 +196,8 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
 
   void _setWinner(String result) async {
     final provider = Provider.of<UserProvider>(context, listen: false);
-    Map<String, dynamic> todayStats = Map<String, dynamic>.from(
-      provider.todayStats,
-    );
+    final todayString = DateTime.now().toIso8601String().substring(0, 10);
+    final todayStats = provider.currentUser?.dailyStats[todayString] ?? {};
 
     int currentWins = todayStats['tictactoeWins'] ?? 0;
     int currentLosses = todayStats['tictatoeLosses'] ?? 0;
@@ -221,7 +221,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       });
 
       // Show rewarded ad to claim coins
-      final adProvider = Provider.of<AdProvider>(context, listen: false);
+      final adProvider = Provider.of<AdProviderNew>(context, listen: false);
       final configProvider = Provider.of<ConfigProvider>(
         context,
         listen: false,
@@ -232,7 +232,10 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       if (adProvider.rewardedAd != null) {
         adProvider.showRewardedAd(
           onAdEarned: (reward) async {
-            await provider.playTicTacToeAndEarnCoins(tictactoeReward);
+            await provider.recordGameReward(
+              gameType: 'tictactoe',
+              amount: tictactoeReward,
+            );
             if (!mounted) return;
             setState(() {
               totalCoinsEarned += tictactoeReward;
@@ -323,61 +326,9 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     todayStats['tictactoeGames'] = currentGames + 1;
   }
 
-  Widget _buildStatItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    bool isHighlighted = false,
-    required BuildContext context,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isHighlighted
-                ? colorScheme.primaryContainer.withOpacity(0.7)
-                : colorScheme.surfaceContainerHighest.withOpacity(0.5),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            color: isHighlighted
-                ? colorScheme.primary
-                : colorScheme.onSurfaceVariant,
-            size: 20,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-            fontFamily: 'Inter',
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: isHighlighted ? colorScheme.primary : colorScheme.onSurface,
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final configProvider = Provider.of<ConfigProvider>(context);
     final colorScheme = Theme.of(context).colorScheme;
-    final int tictactoeReward =
-        configProvider.appConfig['rewards']?['tictactoeReward'] ?? 4;
 
     return Scaffold(
       appBar: CustomAppBar(
@@ -407,154 +358,6 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Card(
-              elevation: 0,
-              color: colorScheme.surfaceContainerLow,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 20,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    // Player X (You)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.shadow.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'You',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  color: colorScheme.onSurface,
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w500,
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'X',
-                            style: Theme.of(context).textTheme.headlineMedium
-                                ?.copyWith(
-                                  color: colorScheme.primary,
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Score
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '$xScore - $oScore',
-                          style: Theme.of(context).textTheme.headlineLarge
-                              ?.copyWith(
-                                color: colorScheme.onPrimaryContainer,
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'Game ${totalGames + 1}',
-                            style: Theme.of(context).textTheme.labelMedium
-                                ?.copyWith(
-                                  color: colorScheme.onPrimaryContainer,
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w500,
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Player O (AI)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.errorContainer.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.shadow.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Iconsax.cpu,
-                                size: 16,
-                                color: colorScheme.error,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'AI',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      color: colorScheme.error,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'O',
-                            style: Theme.of(context).textTheme.headlineMedium
-                                ?.copyWith(
-                                  color: colorScheme.error,
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
@@ -758,69 +561,6 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
               ],
             ),
             const SizedBox(height: 24),
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: colorScheme.outlineVariant.withOpacity(0.2),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildStatItem(
-                          icon: Iconsax.game,
-                          label: 'Total Games',
-                          value: totalGames.toString(),
-                          context: context,
-                        ),
-                        Container(
-                          height: 40,
-                          width: 1,
-                          color: colorScheme.outlineVariant.withOpacity(0.2),
-                        ),
-                        _buildStatItem(
-                          icon: Iconsax.chart_success,
-                          label: 'Win Rate',
-                          value:
-                              '${totalGames > 0 ? (xScore / totalGames * 100).toStringAsFixed(0) : 0}%',
-                          context: context,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildStatItem(
-                          icon: Iconsax.flash,
-                          label: 'Win Streak',
-                          value: winStreak.toString(),
-                          context: context,
-                        ),
-                        Container(
-                          height: 40,
-                          width: 1,
-                          color: colorScheme.outlineVariant.withOpacity(0.2),
-                        ),
-                        _buildStatItem(
-                          icon: Iconsax.coin,
-                          label: 'Reward',
-                          value: '+$tictactoeReward',
-                          isHighlighted: true,
-                          context: context,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ],
         ),
       ),

@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 import 'dart:async';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
-import '../providers/ad_provider.dart';
-import '../providers/user_provider.dart';
+import '../providers/user_provider_new.dart';
+import '../providers/ad_provider_new.dart';
 import '../providers/config_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
@@ -30,7 +30,7 @@ class _ResponsiveSpinAndWinScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AdProvider>(context, listen: false).loadRewardedAd();
+      Provider.of<AdProviderNew>(context, listen: false).loadRewardedAd();
     });
   }
 
@@ -43,8 +43,8 @@ class _ResponsiveSpinAndWinScreenState
   void _startSpin() {
     if (_isSpinning) return;
 
-    final adProvider = Provider.of<AdProvider>(context, listen: false);
-    if (!adProvider.isRewardedAdReady) {
+    final adProvider = Provider.of<AdProviderNew>(context, listen: false);
+    if (adProvider.rewardedAd == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please wait while we prepare your reward...'),
@@ -63,16 +63,20 @@ class _ResponsiveSpinAndWinScreenState
 
   void _onSpinEnd() {
     final reward = _spinRewards[_currentSpinIndex];
-    final adProvider = Provider.of<AdProvider>(context, listen: false);
+    final adProvider = Provider.of<AdProviderNew>(context, listen: false);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final configProvider = Provider.of<ConfigProvider>(context, listen: false);
     final dailySpinLimit = configProvider.appConfig['dailySpinLimit'] ?? 3;
 
-    if (adProvider.isRewardedAdReady) {
+    if (adProvider.rewardedAd != null) {
       adProvider.showRewardedAd(
         onAdEarned: (adReward) async {
           try {
-            await userProvider.spinAndEarnCoins(reward, dailySpinLimit);
+            await userProvider.recordGameReward(
+              gameType: 'spin',
+              amount: reward,
+              dailyLimit: dailySpinLimit,
+            );
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -100,7 +104,9 @@ class _ResponsiveSpinAndWinScreenState
     final configProvider = Provider.of<ConfigProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
     final dailySpinLimit = configProvider.appConfig['dailySpinLimit'] ?? 3;
-    final spinsUsed = userProvider.getTodayStats()?['spinsUsed'] ?? 0;
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final spinsUsed =
+        userProvider.currentUser?.dailyStats[today]?['spinPlayed'] ?? 0;
     final isTabletOrDesktop = !ResponsiveUtils.isMobile(context);
 
     return Scaffold(

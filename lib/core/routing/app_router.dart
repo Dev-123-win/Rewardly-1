@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../screens/splash_screen.dart';
 import '../../screens/auth_screen.dart';
-import '../../screens/home_screen.dart';
+import '../../screens/main_home_screen.dart';
 import '../../screens/invite_screen.dart';
 import '../../screens/transaction_history_screen.dart';
 import '../../screens/profile_screen.dart';
-import '../../screens/watch_ads_screen.dart';
+import '../../screens/watch_ads_screen_new.dart' as watch_ads;
 import '../../screens/spin_and_win_screen_v2.dart';
 import '../../screens/tic_tac_toe_screen.dart';
 import '../../screens/withdraw_screen.dart';
@@ -34,8 +34,8 @@ class AppRouter {
 
         // Return appropriate screen based on route name
         switch (settings.name) {
-          case HomeScreen.routeName:
-            return const HomeScreen();
+          case MainHomeScreen.routeName:
+            return const MainHomeScreen();
           case AuthScreen.routeName:
             return const AuthScreen();
           case InviteScreen.routeName:
@@ -44,8 +44,8 @@ class AppRouter {
             return const TransactionHistoryScreen();
           case ProfileScreen.routeName:
             return const ProfileScreen();
-          case WatchAdsScreen.routeName:
-            return const WatchAdsScreen();
+          case watch_ads.WatchAdsScreen.routeName:
+            return const watch_ads.WatchAdsScreen();
           case SpinAndWinScreen.routeName:
             return const SpinAndWinScreen();
           case TicTacToeScreen.routeName:
@@ -70,7 +70,7 @@ class AppRouter {
   }
 
   static void navigateToHome(BuildContext context) {
-    Navigator.pushReplacementNamed(context, HomeScreen.routeName);
+    Navigator.pushReplacementNamed(context, MainHomeScreen.routeName);
   }
 
   static void navigateToAuth(BuildContext context) {

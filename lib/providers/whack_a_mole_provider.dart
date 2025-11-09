@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/services/game_service.dart';
 import 'user_provider.dart';
-import 'ad_provider.dart';
+import 'ad_provider_new.dart'; // Changed to ad_provider_new.dart
 
 // Game constants
 const int normalMoleCoins = 5; // Base coins per normal mole
@@ -104,7 +104,7 @@ class WhackAMoleProvider extends ChangeNotifier {
     isPlaying = false;
 
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final adProvider = Provider.of<AdProvider>(context, listen: false);
+    final adProvider = Provider.of<AdProviderNew>(context, listen: false); // Changed to AdProviderNew
 
     // Save base game coins if positive
     if (currentGameCoins > 0) {
@@ -120,7 +120,7 @@ class WhackAMoleProvider extends ChangeNotifier {
     }
 
     // Show reward ad if available
-    if (adProvider.isRewardedAdReady) {
+    if (adProvider.rewardedAd != null) { // Changed to adProvider.rewardedAd != null
       adProvider.showRewardedAd(
         onAdEarned: (reward) async {
           // Award bonus coins for watching ad

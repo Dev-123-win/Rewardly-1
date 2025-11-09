@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 import 'dart:async';
 import 'dart:math';
-import '../providers/ad_provider.dart';
-import '../providers/user_provider.dart';
+import '../providers/user_provider_new.dart';
+import '../providers/ad_provider_new.dart';
 import '../providers/config_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
@@ -35,15 +35,17 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
     super.initState();
     _loadGameStats();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AdProvider>(context, listen: false).loadRewardedAd();
+      Provider.of<AdProviderNew>(context, listen: false).loadRewardedAd();
     });
   }
 
   void _loadGameStats() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final today = DateTime.now().toIso8601String().substring(0, 10);
     setState(() {
-      totalGames = userProvider.getTodayStats()?['tictactoeGames'] ?? 0;
-      winStreak = userProvider.getTodayStats()?['winStreak'] ?? 0;
+      totalGames =
+          userProvider.currentUser?.dailyStats[today]?['tictactoePlayed'] ?? 0;
+      winStreak = userProvider.currentUser?.dailyStats[today]?['winStreak'] ?? 0;
     });
   }
 
@@ -192,17 +194,20 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
   }
 
   void _showWinDialog() async {
-    final adProvider = Provider.of<AdProvider>(context, listen: false);
+    final adProvider = Provider.of<AdProviderNew>(context, listen: false);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final configProvider = Provider.of<ConfigProvider>(context, listen: false);
     final tictactoeReward =
         configProvider.appConfig['rewards']?['tictactoeReward'] ?? 4;
 
-    if (adProvider.isRewardedAdReady) {
+    if (adProvider.rewardedAd != null) {
       adProvider.showRewardedAd(
         onAdEarned: (reward) async {
           try {
-            await userProvider.playTicTacToeAndEarnCoins(tictactoeReward);
+            await userProvider.recordGameReward(
+              gameType: 'tictactoe',
+              amount: tictactoeReward,
+            );
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -230,9 +235,6 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final configProvider = Provider.of<ConfigProvider>(context);
-    final tictactoeReward =
-        configProvider.appConfig['rewards']?['tictactoeReward'] ?? 4;
     final isTabletOrDesktop = !ResponsiveUtils.isMobile(context);
     final responsivePadding = ResponsiveUtils.getResponsivePadding(context);
     final boardSize = ResponsiveUtils.getResponsiveWidth(
@@ -259,8 +261,7 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
             // Tablet and Desktop layout
             return Row(
               children: [
-                Expanded(flex: 3, child: _buildGameBoard(boardSize)),
-                Expanded(flex: 2, child: _buildGameInfo(tictactoeReward)),
+                Expanded(child: _buildGameBoard(boardSize)),
               ],
             );
           } else {
@@ -269,8 +270,6 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
               padding: responsivePadding,
               child: Column(
                 children: [
-                  _buildGameInfo(tictactoeReward),
-                  const SizedBox(height: 20),
                   _buildGameBoard(boardSize),
                 ],
               ),
@@ -349,82 +348,10 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
               },
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGameInfo(int tictactoeReward) {
-    return Card(
-      margin: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
-      child: Padding(
-        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Game Stats',
-              style: TextStyle(
-                fontSize: ResponsiveUtils.getResponsiveFontSize(context, 24),
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Your Score: $xScore',
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.getResponsiveFontSize(
-                      context,
-                      16,
-                    ),
-                    color: Colors.blue.shade700,
-                  ),
-                ),
-                Text(
-                  'AI Score: $oScore',
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.getResponsiveFontSize(
-                      context,
-                      16,
-                    ),
-                    color: Colors.red.shade700,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Win Streak: $winStreak',
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.getResponsiveFontSize(
-                      context,
-                      16,
-                    ),
-                  ),
-                ),
-                Text(
-                  'Reward: $tictactoeReward coins',
-                  style: TextStyle(
-                    fontSize: ResponsiveUtils.getResponsiveFontSize(
-                      context,
-                      16,
-                    ),
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
-            if (_isGameOver)
-              FilledButton.icon(
+          if (_isGameOver)
+            Padding(
+              padding: EdgeInsets.only(top: ResponsiveUtils.getResponsiveSpacing(context)),
+              child: FilledButton.icon(
                 onPressed: _resetGame,
                 icon: const Icon(Iconsax.refresh),
                 label: Text(
@@ -442,9 +369,11 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
-}
+
+  }
+

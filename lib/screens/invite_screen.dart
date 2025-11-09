@@ -14,7 +14,7 @@ class InviteScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
-    final String referralCode = userProvider.referralCode ?? 'Generating...';
+    final String referralCode = userProvider.currentUser?.referralCode ?? 'Generating...';
 
     final isDesktop = ResponsiveUtils.isDesktop(context);
     final isTablet = ResponsiveUtils.isTablet(context);

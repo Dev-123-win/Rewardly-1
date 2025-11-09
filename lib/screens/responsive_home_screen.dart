@@ -8,7 +8,7 @@ import '../core/utils/responsive_utils.dart';
 import 'invite_screen.dart';
 import 'transaction_history_screen.dart';
 import 'profile_screen.dart';
-import 'watch_ads_screen.dart';
+import 'watch_ads_screen_new.dart' as watch_ads; // Changed to watch_ads_screen_new.dart
 import 'spin_and_win_screen_v2.dart';
 import 'tic_tac_toe_screen.dart';
 import 'withdraw_screen.dart';
@@ -235,7 +235,7 @@ class HomeTab extends StatelessWidget {
                             'Earn coins by watching video ads',
                             () => Navigator.pushNamed(
                               context,
-                              WatchAdsScreen.routeName,
+                              watch_ads.WatchAdsScreen.routeName, // Changed to watch_ads.WatchAdsScreen.routeName
                             ),
                           ),
                           _buildEarningMethodCard(
@@ -281,7 +281,7 @@ class HomeTab extends StatelessWidget {
                               onTap: () {
                                 Navigator.pushNamed(
                                   context,
-                                  WatchAdsScreen.routeName,
+                                  watch_ads.WatchAdsScreen.routeName, // Changed to watch_ads.WatchAdsScreen.routeName
                                 );
                               },
                             ),

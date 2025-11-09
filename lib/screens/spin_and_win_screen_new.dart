@@ -4,8 +4,8 @@ import 'package:iconsax/iconsax.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
-import '../providers/ad_provider.dart';
-import '../providers/user_provider.dart';
+import '../providers/user_provider_new.dart';
+import '../providers/ad_provider_new.dart';
 import '../providers/config_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/spin_welcome_dialog.dart';
@@ -29,7 +29,7 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AdProvider>(context, listen: false).loadRewardedAd();
+      Provider.of<AdProviderNew>(context, listen: false).loadRewardedAd();
       _showWelcomeDialog();
     });
   }
@@ -52,10 +52,12 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
     if (_isSpinning) return;
 
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final adProvider = Provider.of<AdProvider>(context, listen: false);
+    final adProvider = Provider.of<AdProviderNew>(context, listen: false);
     final configProvider = Provider.of<ConfigProvider>(context, listen: false);
 
-    final int spinsUsed = userProvider.getTodayStats()?['spinsUsed'] ?? 0;
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final int spinsUsed =
+        userProvider.currentUser?.dailyStats[today]?['spinPlayed'] ?? 0;
     final int dailySpinLimit = configProvider.appConfig['dailySpinLimit'] ?? 3;
 
     if (spinsUsed >= dailySpinLimit) {
@@ -264,7 +266,9 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
     final configProvider = Provider.of<ConfigProvider>(context);
     final colorScheme = Theme.of(context).colorScheme;
 
-    final int spinsUsed = userProvider.getTodayStats()?['spinsUsed'] ?? 0;
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final int spinsUsed =
+        userProvider.currentUser?.dailyStats[today]?['spinPlayed'] ?? 0;
     final int dailySpinLimit = configProvider.appConfig['dailySpinLimit'] ?? 3;
 
     final items = _spinRewards.map((reward) {
@@ -350,14 +354,18 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
                           _isSpinning = false;
                         });
                         final int earnedCoins = _spinRewards[_currentSpinIndex];
-                        final adProvider = Provider.of<AdProvider>(
+                        final adProvider = Provider.of<AdProviderNew>(
                           context,
                           listen: false,
                         );
                         await Provider.of<UserProvider>(
                           context,
                           listen: false,
-                        ).spinAndEarnCoins(earnedCoins, dailySpinLimit);
+                        ).recordGameReward(
+                          gameType: 'spin',
+                          amount: earnedCoins,
+                          dailyLimit: dailySpinLimit,
+                        );
                         if (!mounted) return;
                         _showRewardDialog(earnedCoins);
                         adProvider.loadRewardedAd();

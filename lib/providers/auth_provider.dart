@@ -6,12 +6,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/user.dart' as app_models;
-import 'user_provider.dart';
+import 'user_provider.dart'; // Reverted to user_provider.dart
 
 class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final UserProvider _userProvider;
+  final UserProvider _userProvider; // Reverted to UserProvider
 
   AuthProvider(this._userProvider);
 
@@ -70,7 +70,8 @@ class AuthProvider with ChangeNotifier {
       );
 
       // Save user data
-      await _userProvider.saveNewUser(newUser);
+      _userProvider.currentUser = newUser; // Set current user
+      await _userProvider.saveCurrentUser(); // Save current user
 
       // Save device ID association
       if (deviceId != null) {
@@ -155,7 +156,8 @@ class AuthProvider with ChangeNotifier {
           );
 
           // Save user data
-          await _userProvider.saveNewUser(newUser);
+          _userProvider.currentUser = newUser; // Set current user
+          await _userProvider.saveCurrentUser(); // Save current user
 
           // Save device ID association
           if (deviceId != null) {
@@ -209,7 +211,8 @@ class AuthProvider with ChangeNotifier {
         coins: currentAppUser.coins + 200, // Referee bonus
         totalEarned: currentAppUser.totalEarned + 200,
       );
-      await _userProvider.saveNewUser(updatedUser);
+      _userProvider.currentUser = updatedUser; // Set current user
+      await _userProvider.saveCurrentUser(); // Save current user
 
       // Save referral relationship
       final referrals = prefs.getStringList('referrals_${user.uid}') ?? [];

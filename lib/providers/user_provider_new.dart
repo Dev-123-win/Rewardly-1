@@ -23,6 +23,21 @@ class UserProvider with ChangeNotifier {
   String _lastSyncDate = '';
 
   User? get currentUser => _currentUser;
+  LocalTransactionRepository? get transactionRepo => _transactionRepo;
+  set currentUser(User? user) {
+    _currentUser = user;
+    notifyListeners();
+  }
+
+  // Getter for referred users
+  List<Map<String, dynamic>> get referredUsers {
+    final user = auth.FirebaseAuth.instance.currentUser;
+    if (user == null) return [];
+    final referralsKey = 'referrals_${user.uid}';
+    final referralsJson = _prefs.getString(referralsKey);
+    if (referralsJson == null) return [];
+    return List<Map<String, dynamic>>.from(json.decode(referralsJson));
+  }
 
   UserProvider({this.configProvider}) {
     _initPrefs();
@@ -458,6 +473,50 @@ class UserProvider with ChangeNotifier {
       subType: method,
       amount: -amount,
       metadata: details,
+    );
+
+    notifyListeners();
+  }
+
+  Future<void> recordAdWatch(int rewardAmount) async {
+    final user = auth.FirebaseAuth.instance.currentUser;
+    if (user == null || _currentUser == null) return;
+
+    final today = DateTime.now();
+    final todayString = today.toIso8601String().substring(0, 10);
+    final todayStats = _currentUser!.dailyStats[todayString] ?? {};
+    final adsWatchedToday = todayStats['adsWatched'] ?? 0;
+
+    // Update local daily stats
+    _localDailyStats[todayString] = {
+      ...(_localDailyStats[todayString] ?? {}),
+      'adsWatched': adsWatchedToday + 1,
+    };
+    incrementWritesCount();
+
+    // Update user data
+    Map<String, dynamic> updatedDailyStats = Map<String, dynamic>.from(
+      _currentUser!.dailyStats,
+    );
+    updatedDailyStats[todayString] = {
+      ...(updatedDailyStats[todayString] ?? {}),
+      'adsWatched': adsWatchedToday + 1,
+    };
+
+    _currentUser = _currentUser!.copyWith(
+      coins: _currentUser!.coins + rewardAmount,
+      totalEarned: _currentUser!.totalEarned + rewardAmount,
+      dailyStats: updatedDailyStats,
+    );
+    await saveCurrentUser();
+
+    // Create transaction record
+    await _transactionRepo?.addTransaction(
+      userId: user.uid,
+      type: 'earning',
+      subType: 'ad_watch',
+      amount: rewardAmount,
+      metadata: {'date': todayString, 'adCount': adsWatchedToday + 1},
     );
 
     notifyListeners();

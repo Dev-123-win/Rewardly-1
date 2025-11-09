@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 import '../providers/auth_provider.dart' as my_auth_provider;
-import 'home_screen.dart';
+import 'main_home_screen.dart'; // Changed to main_home_screen.dart
 
 class AuthScreen extends StatefulWidget {
   static const String routeName = '/auth';
@@ -57,7 +57,7 @@ class _AuthScreenState extends State<AuthScreen> {
       }
       if (!mounted) return;
       navigator.pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const MainHomeScreen()), // Changed to MainHomeScreen
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -102,7 +102,7 @@ class _AuthScreenState extends State<AuthScreen> {
       if (!mounted) return;
 
       navigator.pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const MainHomeScreen()), // Changed to MainHomeScreen
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;

@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/navigation/navigation_service.dart';
 import '../../core/services/game_service.dart';
-import '../../providers/ad_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/ad_provider_new.dart';
 import '../../widgets/custom_app_bar.dart';
 
 // Reward constants
@@ -133,10 +133,9 @@ class WhackAMoleController extends ChangeNotifier {
     }
   }
 
-  Future<void> _handleGameOver() async {
+  void _handleGameOver() {
     final context = navigatorKey.currentContext;
-    if (context == null) return;
-    if (!context.mounted) return; // Ensure context is still mounted
+    if (context == null || !context.mounted) return;
 
     // Get providers and data before async operations
     final gameData = {
@@ -147,39 +146,35 @@ class WhackAMoleController extends ChangeNotifier {
 
     // Access providers and cache necessary values before async gap
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final adProvider = Provider.of<AdProvider>(context, listen: false);
-    final isRewardedAdReady = adProvider.isRewardedAdReady;
+    final adProvider = Provider.of<AdProviderNew>(context, listen: false);
 
-    // Handle coin awards if any
-    if (coinsToAward > 0) {
-      await GameService.handleGameEarnings(
-        userProvider: userProvider,
-        amount: coinsToAward,
-        gameType: 'whack_a_mole',
-        metadata: gameData,
-      );
-    }
+    // Use a separate async function to handle the logic after the build phase
+    Future.microtask(() async {
+      // Handle coin awards if any
+      if (coinsToAward > 0) {
+        await GameService.handleGameEarnings(
+          userProvider: userProvider,
+          amount: coinsToAward,
+          gameType: 'whack_a_mole',
+          metadata: gameData,
+        );
+      }
 
-    // Cache the context check in a local variable
-    if (!context.mounted) return;
-
-    // Check if we should show ad
-    // Removed redundant context.mounted check
-
-    // Show ad if ready
-    if (isRewardedAdReady) {
-      adProvider.showRewardedAd(
-        onAdEarned: (reward) async {
-          final bonusAmount = 10;
-          currentGameCoins += bonusAmount;
-          await GameService.handleAdReward(
-            userProvider: userProvider,
-            amount: bonusAmount,
-            source: 'whack_a_mole',
-          );
-        },
-      );
-    }
+      // Show ad if ready
+      if (adProvider.rewardedAd != null) {
+        adProvider.showRewardedAd(
+          onAdEarned: (reward) async {
+            const bonusAmount = 10;
+            currentGameCoins += bonusAmount;
+            await GameService.handleAdReward(
+              userProvider: userProvider,
+              amount: bonusAmount,
+              source: 'whack_a_mole',
+            );
+          },
+        );
+      }
+    });
   }
 
   Future<void> onTap(MoleModel value) async {
@@ -343,3 +338,5 @@ class _GameOverPanel extends StatelessWidget {
     );
   }
 }
+  
+
