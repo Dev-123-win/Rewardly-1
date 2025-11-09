@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:math';
 import '../providers/user_provider.dart';
-import '../providers/config_provider.dart';
 import '../providers/ad_provider_new.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/tic_tac_toe_stats_dialog.dart';
+import '../widgets/tic_tac_toe_result_dialog.dart';
 import '../models/tic_tac_toe_history.dart';
 
 class TicTacToeScreen extends StatefulWidget {
@@ -94,36 +95,71 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
   }
 
   void _aiMove() {
-    // Simple AI: find first empty spot
+    // More beatable AI implementation
+    final random = Random();
     int? bestMove;
-    // 1. Check for winning move
-    bestMove = _getWinningMove('O');
-    // 2. Block opponent's winning move
-    bestMove ??= _getWinningMove('X');
-    // 3. Take center
-    bestMove ??= board[4] == '' ? 4 : null;
-    // 4. Take a corner
-    bestMove ??= _getCornerMove();
-    // 5. Take any available spot
-    bestMove ??= board.indexOf('');
 
-    if (bestMove != -1) {
+    // 40% chance to make a random move
+    if (random.nextDouble() < 0.4) {
+      List<int> availableMoves = [];
+      for (int i = 0; i < 9; i++) {
+        if (board[i] == '') {
+          availableMoves.add(i);
+        }
+      }
+      if (availableMoves.isNotEmpty) {
+        bestMove = availableMoves[random.nextInt(availableMoves.length)];
+      }
+    } else {
+      // Smart move with 60% chance
+      bestMove = _getSmartMove();
+    }
+
+    if (bestMove != null) {
       Future.delayed(const Duration(milliseconds: 500), () {
-        setState(() {
-          board[bestMove!] = 'O';
-          _isAITurn = false;
-        });
-        _checkWinner();
-        if (!_isGameOver) {
-          _togglePlayer();
+        if (mounted) {
+          setState(() {
+            board[bestMove!] = 'O';
+            _isAITurn = false;
+          });
+          _checkWinner();
+          if (!_isGameOver) {
+            _togglePlayer();
+          }
         }
       });
     }
   }
 
+  int? _getSmartMove() {
+    // Check for winning move
+    int? move = _getWinningMove('O');
+    if (move != null) return move;
+
+    // Block opponent's winning move
+    move = _getWinningMove('X');
+    if (move != null) return move;
+
+    // Take center if available
+    if (board[4] == '') return 4;
+
+    // Take a random corner
+    final corners = [0, 2, 6, 8];
+    corners.shuffle();
+    for (int corner in corners) {
+      if (board[corner] == '') return corner;
+    }
+
+    // Take any available spot
+    for (int i = 0; i < 9; i++) {
+      if (board[i] == '') return i;
+    }
+
+    return null;
+  }
+
   int? _getWinningMove(String player) {
-    // Check rows, columns, and diagonals for a winning move
-    final List<List<int>> winPatterns = [
+    final winPatterns = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
       [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
       [0, 4, 8], [2, 4, 6], // Diagonals
@@ -146,14 +182,35 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     return null;
   }
 
-  int? _getCornerMove() {
-    final List<int> corners = [0, 2, 6, 8];
-    for (int corner in corners) {
-      if (board[corner] == '') {
-        return corner;
+  Future<void> _handleRewardEarned(int reward, bool isWin) async {
+    if (!mounted) return;
+
+    setState(() {
+      totalCoinsEarned += reward;
+      gameHistory.insert(
+        0,
+        TicTacToeHistory(
+          date: DateTime.now(),
+          isWin: isWin,
+          coinsEarned: reward,
+          opponent: 'AI',
+        ),
+      );
+      if (gameHistory.length > 10) {
+        gameHistory.removeLast();
       }
-    }
-    return null;
+    });
+
+    if (!mounted) return;
+
+    // Show reward message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('You earned $reward coins!'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    _resetGame();
   }
 
   void _checkWinner() {
@@ -162,7 +219,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       if (board[i] != '' &&
           board[i] == board[i + 1] &&
           board[i] == board[i + 2]) {
-        _setWinner(board[i]);
+        _showGameResult(board[i]);
         return;
       }
     }
@@ -172,29 +229,35 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       if (board[i] != '' &&
           board[i] == board[i + 3] &&
           board[i] == board[i + 6]) {
-        _setWinner(board[i]);
+        _showGameResult(board[i]);
         return;
       }
     }
 
     // Check diagonals
     if (board[0] != '' && board[0] == board[4] && board[0] == board[8]) {
-      _setWinner(board[0]);
+      _showGameResult(board[0]);
       return;
     }
     if (board[2] != '' && board[2] == board[4] && board[2] == board[6]) {
-      _setWinner(board[2]);
+      _showGameResult(board[2]);
       return;
     }
 
     // Check for draw
     if (!board.contains('')) {
-      _setWinner('Draw');
+      _showGameResult('Draw');
       return;
     }
   }
 
-  void _setWinner(String result) async {
+  void _showGameResult(String result) async {
+    setState(() {
+      winner = result;
+      _isGameOver = true;
+    });
+
+    // Update stats before showing dialog
     final provider = Provider.of<UserProvider>(context, listen: false);
     final todayString = DateTime.now().toIso8601String().substring(0, 10);
     final todayStats = provider.currentUser?.dailyStats[todayString] ?? {};
@@ -204,11 +267,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     int currentStreak = todayStats['tictactoeStreak'] ?? 0;
     int currentGames = todayStats['tictactoeGames'] ?? 0;
 
-    setState(() {
-      winner = result;
-      _isGameOver = true;
-    });
-
+    // Update statistics based on result
     if (result == 'X') {
       currentWins++;
       currentStreak++;
@@ -217,65 +276,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       setState(() {
         xScore = currentWins;
         winStreak = currentStreak;
-        totalGames = currentGames + 1;
       });
-
-      // Show rewarded ad to claim coins
-      final adProvider = Provider.of<AdProviderNew>(context, listen: false);
-      final configProvider = Provider.of<ConfigProvider>(
-        context,
-        listen: false,
-      );
-      final int tictactoeReward =
-          configProvider.appConfig['rewards']?['tictactoeReward'] ?? 4;
-
-      if (adProvider.rewardedAd != null) {
-        adProvider.showRewardedAd(
-          onAdEarned: (reward) async {
-            await provider.recordGameReward(
-              gameType: 'tictactoe',
-              amount: tictactoeReward,
-            );
-            if (!mounted) return;
-            setState(() {
-              totalCoinsEarned += tictactoeReward;
-              // Add to game history
-              gameHistory.insert(
-                0,
-                TicTacToeHistory(
-                  date: DateTime.now(),
-                  isWin: true,
-                  coinsEarned: tictactoeReward,
-                  opponent: 'AI',
-                ),
-              );
-              // Keep only last 10 games in history
-              if (gameHistory.length > 10) {
-                gameHistory.removeLast();
-              }
-            });
-
-            // Show reward message
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('You earned $tictactoeReward coins!'),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-            adProvider.loadRewardedAd(); // Load next ad
-          },
-        );
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ad not ready. No coins awarded.'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        adProvider.loadRewardedAd();
-      }
     } else if (result == 'O') {
       currentLosses++;
       currentStreak = 0;
@@ -284,46 +285,72 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       setState(() {
         oScore = currentLosses;
         winStreak = 0;
-        totalGames = currentGames + 1;
       });
-
-      // Add loss to history
-      gameHistory.insert(
-        0,
-        TicTacToeHistory(
-          date: DateTime.now(),
-          isWin: false,
-          coinsEarned: 0,
-          opponent: 'AI',
-        ),
-      );
-      if (gameHistory.length > 10) {
-        gameHistory.removeLast();
-      }
     } else {
       currentStreak = 0;
       todayStats['tictactoeStreak'] = currentStreak;
       setState(() {
         winStreak = 0;
-        totalGames = currentGames + 1;
       });
-
-      // Add draw to history
-      gameHistory.insert(
-        0,
-        TicTacToeHistory(
-          date: DateTime.now(),
-          isWin: false,
-          coinsEarned: 0,
-          opponent: 'AI',
-        ),
-      );
-      if (gameHistory.length > 10) {
-        gameHistory.removeLast();
-      }
     }
 
     todayStats['tictactoeGames'] = currentGames + 1;
+    setState(() {
+      totalGames = currentGames + 1;
+    });
+
+    if (!mounted) return;
+
+    // Show result dialog
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => TicTacToeResultDialog(
+        result: result == 'X' ? 'win' : (result == 'O' ? 'lose' : 'draw'),
+        onClaimCoins: () async {
+          Navigator.of(context).pop();
+
+          if (result == 'O') {
+            // No coins for losing
+            _resetGame();
+            return;
+          }
+
+          final adProvider = Provider.of<AdProviderNew>(context, listen: false);
+          final int reward = result == 'X' ? 4 : 2; // 4 for win, 2 for draw
+
+          if (adProvider.rewardedAd != null) {
+            adProvider.showRewardedAd(
+              onAdEarned: (rewardItem) async {
+                await provider.recordGameReward(
+                  gameType: 'tictactoe',
+                  amount: reward,
+                );
+
+                if (!mounted) return;
+
+                // Use a separate function to update state and show messages
+                await _handleRewardEarned(reward, result == 'X');
+
+                adProvider.loadRewardedAd(); // Load next ad
+              },
+            );
+          } else {
+            if (!mounted) return;
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Ad not ready. Try again later.'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+              adProvider.loadRewardedAd();
+              _resetGame();
+            }
+          }
+        },
+      ),
+    );
   }
 
   @override
@@ -512,53 +539,26 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
             ),
             const SizedBox(height: 20),
             const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: _resetGame,
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    icon: const Icon(Iconsax.refresh_circle),
-                    label: Text(
-                      'New Game',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: colorScheme.onPrimary,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _resetGame,
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: FilledButton.tonalIcon(
-                    onPressed: () {
-                      // TODO: Implement hint logic
-                    },
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    icon: const Icon(Iconsax.lamp_on),
-                    label: Text(
-                      'Get Hint',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: colorScheme.onSecondaryContainer,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                icon: const Icon(Iconsax.refresh_circle),
+                label: Text(
+                  'New Game',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onPrimary,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ],
+              ),
             ),
             const SizedBox(height: 24),
           ],

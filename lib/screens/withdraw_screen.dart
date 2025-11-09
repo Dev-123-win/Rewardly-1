@@ -4,6 +4,7 @@ import '../providers/user_provider.dart';
 import '../providers/config_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
+import '../models/payment_method.dart';
 
 class WithdrawScreen extends StatefulWidget {
   static const String routeName = '/withdraw';
@@ -27,13 +28,29 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   @override
   void initState() {
     super.initState();
-    final user = Provider.of<UserProvider>(context, listen: false).currentUser;
-    if (user?.withdrawalInfo != null) {
-      final info = user!.withdrawalInfo!;
-      _upiController.text = info['upiId'] ?? '';
-      _accountNumberController.text = info['bankAccount'] ?? '';
-      _ifscController.text = info['bankIfsc'] ?? '';
-      _nameController.text = info['accountHolder'] ?? '';
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final user = userProvider.currentUser;
+    if (user != null) {
+      // Try to find saved UPI payment method
+      final upiMethod = user.paymentMethods.firstWhere(
+        (m) => m['type'] == 'upi',
+        orElse: () => {},
+      );
+      if (upiMethod.isNotEmpty) {
+        _upiController.text = upiMethod['details']['upiId'] ?? '';
+      }
+
+      // Try to find saved bank account payment method
+      final bankMethod = user.paymentMethods.firstWhere(
+        (m) => m['type'] == 'bank',
+        orElse: () => {},
+      );
+      if (bankMethod.isNotEmpty) {
+        _accountNumberController.text =
+            bankMethod['details']['accountNumber'] ?? '';
+        _ifscController.text = bankMethod['details']['ifscCode'] ?? '';
+        _nameController.text = bankMethod['details']['accountHolderName'] ?? '';
+      }
     }
   }
 
@@ -54,6 +71,21 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           'minWithdrawalCoins',
           defaultValue: 10000,
         );
+
+        // Create payment method before withdrawal
+        if (_selectedMethod == 'UPI') {
+          await userProvider.updatePaymentMethod(
+            PaymentMethod.createUPI(_upiController.text),
+          );
+        } else {
+          await userProvider.updatePaymentMethod(
+            PaymentMethod.createBankAccount(
+              accountNumber: _accountNumberController.text,
+              ifscCode: _ifscController.text,
+              accountHolderName: _nameController.text,
+            ),
+          );
+        }
 
         final Map<String, dynamic> details = _selectedMethod == 'UPI'
             ? {'upiId': _upiController.text}

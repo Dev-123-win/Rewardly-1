@@ -15,8 +15,11 @@ import '../../screens/edit_profile_screen.dart';
 import '../../screens/settings_screen.dart';
 import '../../screens/help_support_screen.dart';
 import '../../screens/whack_a_mole_screen.dart';
+import '../../screens/daily_bonus_screen.dart';
+import '../../screens/responsive_payment_methods_screen.dart';
 
 class AppRouter {
+  static const String paymentMethodsRoute = '/payment-methods';
   static Route<dynamic> generateRoute(RouteSettings settings) {
     return MaterialPageRoute(
       builder: (context) {
@@ -61,6 +64,10 @@ class AppRouter {
             return const HelpSupportScreen();
           case '/whack-a-mole':
             return const WhackAMoleScreen();
+          case DailyBonusScreen.routeName:
+            return const DailyBonusScreen();
+          case paymentMethodsRoute:
+            return const ResponsivePaymentMethodsScreen();
           default:
             return Scaffold(
               body: Center(child: Text('Route ${settings.name} not found')),

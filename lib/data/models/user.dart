@@ -12,6 +12,9 @@ class User {
   final DateTime? lastActiveDate;
   final Map<String, dynamic> dailyStats;
   final Map<String, dynamic>? withdrawalInfo;
+  final int dailyStreak;
+  final DateTime? lastStreakDate;
+  final List<Map<String, dynamic>> paymentMethods;
 
   User({
     required this.uid,
@@ -27,6 +30,9 @@ class User {
     this.lastActiveDate,
     this.dailyStats = const {},
     this.withdrawalInfo,
+    this.dailyStreak = 1,
+    this.lastStreakDate,
+    this.paymentMethods = const [],
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -48,6 +54,13 @@ class User {
       withdrawalInfo: json['withdrawalInfo'] != null
           ? Map<String, dynamic>.from(json['withdrawalInfo'])
           : null,
+      dailyStreak: json['dailyStreak'] as int? ?? 1,
+      lastStreakDate: json['lastStreakDate'] != null
+          ? DateTime.parse(json['lastStreakDate'])
+          : null,
+      paymentMethods: List<Map<String, dynamic>>.from(
+        json['paymentMethods'] ?? [],
+      ),
     );
   }
 
@@ -66,6 +79,9 @@ class User {
       'lastActiveDate': lastActiveDate?.toIso8601String(),
       'dailyStats': dailyStats,
       'withdrawalInfo': withdrawalInfo,
+      'dailyStreak': dailyStreak,
+      'lastStreakDate': lastStreakDate?.toIso8601String(),
+      'paymentMethods': paymentMethods,
     };
   }
 
@@ -83,6 +99,9 @@ class User {
     DateTime? lastActiveDate,
     Map<String, dynamic>? dailyStats,
     Map<String, dynamic>? withdrawalInfo,
+    int? dailyStreak,
+    DateTime? lastStreakDate,
+    List<Map<String, dynamic>>? paymentMethods,
   }) {
     return User(
       uid: uid ?? this.uid,
@@ -98,6 +117,9 @@ class User {
       lastActiveDate: lastActiveDate ?? this.lastActiveDate,
       dailyStats: dailyStats ?? this.dailyStats,
       withdrawalInfo: withdrawalInfo ?? this.withdrawalInfo,
+      dailyStreak: dailyStreak ?? this.dailyStreak,
+      lastStreakDate: lastStreakDate ?? this.lastStreakDate,
+      paymentMethods: paymentMethods ?? this.paymentMethods,
     );
   }
 }

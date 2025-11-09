@@ -6,6 +6,7 @@ import 'watch_ads_screen_new.dart';
 import 'spin_and_win_screen_v2.dart';
 import 'tic_tac_toe_screen.dart';
 import 'withdraw_screen.dart';
+import 'daily_bonus_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -44,11 +45,21 @@ class HomeScreen extends StatelessWidget {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Iconsax.coin, size: 16),
-                              const SizedBox(width: 4),
+                              const Icon(Iconsax.wallet_3, size: 16),
+                              const SizedBox(width: 8),
+                              Container(
+                                height: 16,
+                                width: 1,
+                                color: colorScheme.outlineVariant,
+                              ),
+                              const SizedBox(width: 8),
                               Text(
                                 '₹${userProvider.currentUser?.coins.toString() ?? '0'}',
-                                style: Theme.of(context).textTheme.labelLarge,
+                                style: Theme.of(context).textTheme.labelLarge
+                                    ?.copyWith(
+                                      color: colorScheme.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                               ),
                             ],
                           ),
@@ -129,10 +140,28 @@ class HomeScreen extends StatelessWidget {
                     'Daily Bonus Claim',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  subtitle: Text('Come back tomorrow!'),
-                  trailing: OutlinedButton(
-                    onPressed: null,
-                    child: const Text('Claimed'),
+                  subtitle: Row(
+                    children: [
+                      Icon(
+                        Iconsax.timer_1,
+                        size: 14,
+                        color: colorScheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Day ${userProvider.currentUser?.dailyStreak ?? 1} streak',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  trailing: FilledButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, DailyBonusScreen.routeName);
+                    },
+                    child: const Text('Claim'),
                   ),
                 ),
               ),

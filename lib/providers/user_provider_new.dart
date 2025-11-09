@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/user.dart';
 import '../data/repositories/local_transaction_repository.dart';
 import '../providers/config_provider.dart';
+import '../models/payment_method.dart';
 
 const String kUserPrefix = 'user_';
 const String kDailyStatsKey = 'daily_stats';
@@ -72,6 +73,37 @@ class UserProvider with ChangeNotifier {
         json.encode(_currentUser!.toJson()),
       );
     }
+  }
+
+  Future<void> updatePaymentMethod(PaymentMethod method) async {
+    if (_currentUser == null) return;
+
+    var updatedMethods = List<Map<String, dynamic>>.from(
+      _currentUser!.paymentMethods,
+    );
+
+    // Remove existing method of the same type if it exists
+    updatedMethods.removeWhere((m) => m['type'] == method.type);
+
+    // Add the new method
+    updatedMethods.add(method.toJson());
+
+    _currentUser = _currentUser!.copyWith(paymentMethods: updatedMethods);
+    await saveCurrentUser();
+    notifyListeners();
+  }
+
+  PaymentMethod? getPaymentMethod(String type) {
+    if (_currentUser == null) return null;
+
+    final methodJson = _currentUser!.paymentMethods.firstWhere(
+      (m) => m['type'] == type,
+      orElse: () => {},
+    );
+
+    if (methodJson.isEmpty) return null;
+
+    return PaymentMethod.fromJson(methodJson);
   }
 
   Future<void> saveWithdrawalInfo(Map<String, dynamic> withdrawalInfo) async {
@@ -327,6 +359,28 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> resetDailyStreak() async {
+    if (_currentUser == null) return;
+
+    _currentUser = _currentUser!.copyWith(
+      dailyStreak: 1,
+      lastStreakDate: DateTime.now(),
+    );
+    await saveCurrentUser();
+    notifyListeners();
+  }
+
+  Future<void> incrementDailyStreak() async {
+    if (_currentUser == null) return;
+
+    _currentUser = _currentUser!.copyWith(
+      dailyStreak: _currentUser!.dailyStreak + 1,
+      lastStreakDate: DateTime.now(),
+    );
+    await saveCurrentUser();
+    notifyListeners();
+  }
+
   Future<void> claimDailyReward(int dailyRewardAmount) async {
     final user = auth.FirebaseAuth.instance.currentUser;
     if (user == null || _currentUser == null) return;
@@ -335,18 +389,29 @@ class UserProvider with ChangeNotifier {
     final todayString = today.toIso8601String().substring(0, 10);
     final Map<String, dynamic> todayStats =
         _currentUser!.dailyStats[todayString] ?? {};
-    final bool dailyRewardClaimed = todayStats['dailyRewardClaimed'] ?? false;
+    final bool dailyRewardClaimed = todayStats['dailyBonusClaimed'] ?? false;
 
-    if (dailyRewardClaimed ||
-        _currentUser!.lastActiveDate?.toIso8601String().substring(0, 10) ==
-            todayString) {
+    if (dailyRewardClaimed) {
       throw Exception("Daily reward already claimed today.");
+    }
+
+    // Check streak continuity
+    final lastStreakDate = _currentUser!.lastStreakDate;
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    final yesterdayString = yesterday.toIso8601String().substring(0, 10);
+
+    if (lastStreakDate != null) {
+      final lastClaimDate = lastStreakDate.toIso8601String().substring(0, 10);
+      if (lastClaimDate != yesterdayString) {
+        // Streak broken, reset to 1
+        await resetDailyStreak();
+      }
     }
 
     // Update local daily stats
     _localDailyStats[todayString] = {
       ...(_localDailyStats[todayString] ?? {}),
-      'dailyRewardClaimed': true,
+      'dailyBonusClaimed': true,
     };
     incrementWritesCount();
 
@@ -356,7 +421,7 @@ class UserProvider with ChangeNotifier {
     );
     updatedDailyStats[todayString] = {
       ...(updatedDailyStats[todayString] ?? {}),
-      'dailyRewardClaimed': true,
+      'dailyBonusClaimed': true,
     };
 
     List<String> activeDays = List<String>.from(_currentUser!.activeDays);
@@ -370,6 +435,7 @@ class UserProvider with ChangeNotifier {
       lastActiveDate: today,
       activeDays: activeDays,
       dailyStats: updatedDailyStats,
+      lastStreakDate: today,
     );
     await saveCurrentUser();
 
@@ -531,9 +597,7 @@ class UserProvider with ChangeNotifier {
     final int localTotalWithdrawn = _currentUser!.totalWithdrawn;
 
     // Get transactions from local storage
-    final transactions = _transactionRepo?.getTransactions(
-      userId: userId,
-    );
+    final transactions = _transactionRepo?.getTransactions(userId: userId);
     if (transactions == null) return;
 
     // Calculate balance from transactions

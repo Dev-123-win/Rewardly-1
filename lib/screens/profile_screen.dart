@@ -8,6 +8,7 @@ import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
 import 'help_support_screen.dart';
 import 'auth_screen.dart';
+import '../core/routing/app_router.dart';
 
 class ProfileScreen extends StatelessWidget {
   static const String routeName = '/profile';
@@ -290,9 +291,10 @@ class ProfileScreen extends StatelessWidget {
                             context,
                             'Payment Methods',
                             Iconsax.wallet_3,
-                            () {
-                              /* TODO: Navigate to Payment Methods screen */
-                            },
+                            () => Navigator.pushNamed(
+                              context,
+                              AppRouter.paymentMethodsRoute,
+                            ),
                             showDivider: true,
                           ),
                           _buildListTile(
