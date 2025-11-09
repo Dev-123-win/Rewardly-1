@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../screens/splash_screen.dart';
 import '../../screens/auth_screen.dart';
+import '../../screens/main_container_screen.dart';
 import '../../screens/main_home_screen.dart';
 import '../../screens/invite_screen.dart';
 import '../../screens/transaction_history_screen.dart';
@@ -35,7 +36,7 @@ class AppRouter {
         // Return appropriate screen based on route name
         switch (settings.name) {
           case MainHomeScreen.routeName:
-            return const MainHomeScreen();
+            return const MainContainerScreen();
           case AuthScreen.routeName:
             return const AuthScreen();
           case InviteScreen.routeName:
