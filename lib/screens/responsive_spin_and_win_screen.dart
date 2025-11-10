@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 import 'dart:async';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
-import '../providers/user_provider_new.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/ad_provider_new.dart';
 import '../providers/config_provider.dart';
 import '../widgets/custom_app_bar.dart';
@@ -25,13 +25,42 @@ class _ResponsiveSpinAndWinScreenState
   final List<int> _spinRewards = [5, 10, 20, 5, 30, 50, 10, 100];
   int _currentSpinIndex = 0;
   bool _isSpinning = false;
+  late SharedPreferences _prefs;
+  int _spinsUsedToday = 0;
+  int _coins = 0;
 
   @override
   void initState() {
     super.initState();
+    _initSharedPreferences();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<AdProviderNew>(context, listen: false).loadRewardedAd();
     });
+  }
+
+  Future<void> _initSharedPreferences() async {
+    _prefs = await SharedPreferences.getInstance();
+    _loadSpinData();
+  }
+
+  void _loadSpinData() {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    setState(() {
+      _spinsUsedToday = _prefs.getInt('spinsUsed_$today') ?? 0;
+      _coins = _prefs.getInt('coins') ?? 0;
+    });
+  }
+
+  Future<void> _updateSpinsUsed(int count) async {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    await _prefs.setInt('spinsUsed_$today', count);
+    _loadSpinData();
+  }
+
+  Future<void> _updateCoins(int amount) async {
+    _coins += amount;
+    await _prefs.setInt('coins', _coins);
+    _loadSpinData();
   }
 
   @override
@@ -42,6 +71,18 @@ class _ResponsiveSpinAndWinScreenState
 
   void _startSpin() {
     if (_isSpinning) return;
+
+    final configProvider = Provider.of<ConfigProvider>(context, listen: false);
+    final dailySpinLimit = configProvider.appConfig['dailySpinLimit'] ?? 3;
+
+    if (_spinsUsedToday >= dailySpinLimit) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You have used all your spins for today!'),
+        ),
+      );
+      return;
+    }
 
     final adProvider = Provider.of<AdProviderNew>(context, listen: false);
     if (adProvider.rewardedAd == null) {
@@ -64,19 +105,13 @@ class _ResponsiveSpinAndWinScreenState
   void _onSpinEnd() {
     final reward = _spinRewards[_currentSpinIndex];
     final adProvider = Provider.of<AdProviderNew>(context, listen: false);
-    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
-    final configProvider = Provider.of<ConfigProvider>(context, listen: false);
-    final dailySpinLimit = configProvider.appConfig['dailySpinLimit'] ?? 3;
 
     if (adProvider.rewardedAd != null) {
       adProvider.showRewardedAd(
         onAdEarned: (adReward) async {
           try {
-            await userProvider.recordGameReward(
-              gameType: 'spin',
-              amount: reward,
-              dailyLimit: dailySpinLimit,
-            );
+            await _updateCoins(reward);
+            await _updateSpinsUsed(_spinsUsedToday + 1);
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -102,11 +137,7 @@ class _ResponsiveSpinAndWinScreenState
   @override
   Widget build(BuildContext context) {
     final configProvider = Provider.of<ConfigProvider>(context);
-    final userProvider = Provider.of<UserProviderNew>(context);
     final dailySpinLimit = configProvider.appConfig['dailySpinLimit'] ?? 3;
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    final spinsUsed =
-        userProvider.currentUser?.dailyStats[today]?['spinPlayed'] ?? 0;
     final isTabletOrDesktop = !ResponsiveUtils.isMobile(context);
 
     return Scaffold(
@@ -126,7 +157,7 @@ class _ResponsiveSpinAndWinScreenState
                 ),
                 Expanded(
                   flex: 2,
-                  child: _buildSpinInfo(dailySpinLimit, spinsUsed),
+                  child: _buildSpinInfo(dailySpinLimit, _spinsUsedToday),
                 ),
               ],
             );
@@ -137,7 +168,7 @@ class _ResponsiveSpinAndWinScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildSpinInfo(dailySpinLimit, spinsUsed),
+                  _buildSpinInfo(dailySpinLimit, _spinsUsedToday),
                   SizedBox(
                     height: ResponsiveUtils.getResponsiveSpacing(context),
                   ),

@@ -1,19 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
-import '../providers/user_provider_new.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'watch_ads_screen_new.dart';
 import 'spin_and_win_screen_new.dart';
 import 'tic_tac_toe_screen.dart';
 import 'withdraw_screen.dart';
 import 'daily_bonus_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late SharedPreferences _prefs;
+  String _displayName = 'Guest User';
+  int _coins = 0;
+  int _dailyStreak = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _initSharedPreferences();
+  }
+
+  Future<void> _initSharedPreferences() async {
+    _prefs = await SharedPreferences.getInstance();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
+    setState(() {
+      _displayName = _prefs.getString('displayName') ?? 'Guest User';
+      _coins = _prefs.getInt('coins') ?? 0;
+      _dailyStreak = _prefs.getInt('dailyStreak') ?? 1;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProviderNew>(context);
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -56,7 +83,7 @@ class HomeScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  '₹${userProvider.currentUser?.coins.toString() ?? '0'}',
+                                  '₹$_coins',
                                   style: Theme.of(context).textTheme.labelLarge
                                       ?.copyWith(
                                         color: colorScheme.primary,
@@ -87,7 +114,7 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 // Welcome Text
                 Text(
-                  'Hello, ${userProvider.currentUser?.displayName ?? 'User'}!',
+                  'Hello, $_displayName!',
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -112,7 +139,7 @@ class HomeScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '${userProvider.currentUser?.coins ?? 0} coins',
+                              '$_coins coins',
                               style: Theme.of(context).textTheme.headlineMedium
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
@@ -158,7 +185,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Day ${userProvider.currentUser?.dailyStreak ?? 1} streak',
+                          'Day $_dailyStreak streak',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: colorScheme.primary,
@@ -256,7 +283,7 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(12),

@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/services/game_service.dart';
-import '../../providers/user_provider_new.dart';
 import '../../providers/ad_provider_new.dart';
 import '../../widgets/custom_app_bar.dart';
 
@@ -30,7 +29,6 @@ class WhackAMoleGame extends StatelessWidget {
       create: (context) => WhackAMoleController(
         initialDuration: const Duration(minutes: 1),
         totalMoles: 9,
-        userProvider: Provider.of<UserProviderNew>(context, listen: false),
         adProvider: Provider.of<AdProviderNew>(context, listen: false),
       ),
       child: const WhackAMolePage(),
@@ -74,14 +72,12 @@ class WhackAMoleController extends ChangeNotifier {
   WhackAMoleController({
     Duration initialDuration = const Duration(minutes: 1),
     int totalMoles = 9,
-    required this.userProvider,
     required this.adProvider,
   }) : _duration = initialDuration,
        _length = totalMoles {
     _initGame();
   }
 
-  final UserProviderNew userProvider;
   final AdProviderNew adProvider;
 
   final Duration _duration;
@@ -135,11 +131,11 @@ class WhackAMoleController extends ChangeNotifier {
       await start(isFirstTime: false);
     } else {
       _stoppedAt = DateTime.now();
-      _handleGameOver();
+      notifyListeners(); // Notify listeners that game is over
     }
   }
 
-  void _handleGameOver() {
+  Future<void> handleGameOverActions(BuildContext context) async {
     // Get providers and data before async operations
     final gameData = {
       'consecutiveHits': consecutiveHits,
@@ -147,33 +143,29 @@ class WhackAMoleController extends ChangeNotifier {
     };
     final coinsToAward = currentGameCoins;
 
-    // Use a separate async function to handle the logic after the build phase
-    Future.microtask(() async {
-      // Handle coin awards if any
-      if (coinsToAward > 0) {
-        await GameService.handleGameEarnings(
-          userProvider: userProvider,
-          amount: coinsToAward,
-          gameType: 'whack_a_mole',
-          metadata: gameData,
-        );
-      }
+    // Handle coin awards if any
+    if (coinsToAward > 0) {
+      await GameService.handleGameEarnings(
+        amount: coinsToAward,
+        gameType: 'whack_a_mole',
+        metadata: gameData,
+      );
+    }
 
-      // Show ad if ready
-      if (adProvider.rewardedAd != null) {
-        adProvider.showRewardedAd(
-          onAdEarned: (reward) async {
-            const bonusAmount = 10;
-            currentGameCoins += bonusAmount;
-            await GameService.handleAdReward(
-              userProvider: userProvider,
-              amount: bonusAmount,
-              source: 'whack_a_mole',
-            );
-          },
-        );
-      }
-    });
+    // Show ad if ready
+    if (adProvider.rewardedAd != null) {
+      if (!context.mounted) return;
+      adProvider.showRewardedAd(
+        onAdEarned: (reward) async {
+          const bonusAmount = 10;
+          currentGameCoins += bonusAmount;
+          await GameService.handleAdReward(
+            amount: bonusAmount,
+            source: 'whack_a_mole',
+          );
+        },
+      );
+    }
   }
 
   Future<void> onTap(MoleModel value) async {
@@ -213,22 +205,30 @@ class WhackAMoleLevelView extends StatefulWidget {
 }
 
 class _WhackAMoleLevelViewState extends State<WhackAMoleLevelView> {
-  bool _mounted = true;
+  late WhackAMoleController _controller;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      if (_mounted) {
-        context.read<WhackAMoleController>().start();
-      }
-    });
+    _controller = context.read<WhackAMoleController>();
+    _controller.addListener(_handleControllerChanges);
+    Future.microtask(() => _controller.start());
   }
 
   @override
   void dispose() {
-    _mounted = false;
+    _controller.removeListener(_handleControllerChanges);
     super.dispose();
+  }
+
+  void _handleControllerChanges() {
+    if (_controller.isGameOver) {
+      // Perform BuildContext-dependent actions here
+      Future.microtask(() async {
+        if (!mounted) return;
+        await _controller.handleGameOverActions(context);
+      });
+    }
   }
 
   @override

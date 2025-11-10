@@ -4,7 +4,7 @@ import 'package:iconsax/iconsax.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
-import '../providers/user_provider_new.dart';
+import '../providers/local_user_provider.dart';
 import '../providers/ad_provider_new.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/spin_result_dialog.dart';
@@ -102,7 +102,7 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
 
       if (coins > 0) {
         // Record the reward if coins were won
-        Provider.of<UserProviderNew>(
+        Provider.of<LocalUserProvider>(
           context,
           listen: false,
         ).recordGameReward(gameType: 'spin', amount: coins);

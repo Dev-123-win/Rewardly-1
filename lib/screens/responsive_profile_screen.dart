@@ -1,26 +1,62 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
-import '../providers/auth_provider.dart';
-import '../providers/user_provider_new.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
 
 import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
 import 'help_support_screen.dart';
-import 'auth_screen.dart';
+import 'onboarding_screen.dart'; // Navigate to onboarding after clearing data
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   static const String routeName = '/profile';
 
   const ProfileScreen({super.key});
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  late SharedPreferences _prefs;
+  String _displayName = 'Guest User';
+  final String _photoURL = 'https://via.placeholder.com/150'; // Placeholder image
+  final String _email = 'guest@example.com'; // Placeholder email
+
+  @override
+  void initState() {
+    super.initState();
+    _initSharedPreferences();
+  }
+
+  Future<void> _initSharedPreferences() async {
+    _prefs = await SharedPreferences.getInstance();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
+    setState(() {
+      _displayName = _prefs.getString('displayName') ?? 'Guest User';
+      // _photoURL = _prefs.getString('photoURL') ?? 'https://via.placeholder.com/150';
+      // _email = _prefs.getString('email') ?? 'guest@example.com';
+    });
+  }
+
+  Future<void> _handleLogout() async {
+    await _prefs.clear(); // Clear all user data
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const OnboardingScreen(),
+        ),
+        (Route<dynamic> route) => false,
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final userProvider = Provider.of<UserProviderNew>(context);
-    final currentUser = userProvider.currentUser;
     final screenWidth = MediaQuery.of(context).size.width;
     final padding = ResponsiveUtils.getResponsivePadding(context);
 
@@ -56,10 +92,7 @@ class ProfileScreen extends StatelessWidget {
                             radius: ResponsiveUtils.isDesktop(context)
                                 ? 48
                                 : 32,
-                            backgroundImage: NetworkImage(
-                              currentUser?.photoURL ??
-                                  'https://via.placeholder.com/150',
-                            ),
+                            backgroundImage: NetworkImage(_photoURL),
                           ),
                           SizedBox(
                             width: ResponsiveUtils.isDesktop(context) ? 24 : 16,
@@ -69,7 +102,7 @@ class ProfileScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  currentUser?.displayName ?? 'No Name',
+                                  _displayName,
                                   style: ResponsiveUtils.isDesktop(context)
                                       ? Theme.of(
                                           context,
@@ -78,7 +111,7 @@ class ProfileScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  currentUser?.email ?? 'No Email',
+                                  _email,
                                   style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(
                                         color: Theme.of(
@@ -139,17 +172,7 @@ class ProfileScreen extends StatelessWidget {
                           context,
                           'Logout',
                           Iconsax.logout,
-                          () async {
-                            await authProvider.signOut();
-                            if (context.mounted) {
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                  builder: (context) => const AuthScreen(),
-                                ),
-                                (Route<dynamic> route) => false,
-                              );
-                            }
-                          },
+                          _handleLogout,
                           isError: true,
                         ),
                       ],

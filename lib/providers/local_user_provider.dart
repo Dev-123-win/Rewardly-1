@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/user.dart';
 import '../data/repositories/local_transaction_repository.dart';
 import '../providers/local_config_provider.dart';
+import '../models/payment_method.dart';
 
 const String kUserPrefix = 'local_user_';
 const String kCurrentUserKey = 'current_user';
@@ -49,6 +50,44 @@ class LocalUserProvider with ChangeNotifier {
 
     await _prefs.setString(kCurrentUserKey, userId);
     _currentUser = newUser;
+    await saveCurrentUser();
+    notifyListeners();
+  }
+
+  Future<void> saveWithdrawalInfo(Map<String, dynamic> details) async {
+    if (_currentUser == null || _currentUserId == null) return;
+
+    _currentUser = _currentUser!.copyWith(
+      withdrawalInfo: details,
+    );
+
+    await saveCurrentUser();
+    notifyListeners();
+  }
+
+  Future<void> updatePaymentMethod(PaymentMethod newMethod) async {
+    if (_currentUser == null || _currentUserId == null) return;
+
+    List<Map<String, dynamic>> updatedPaymentMethods =
+        List<Map<String, dynamic>>.from(_currentUser!.paymentMethods);
+
+    // Check if a method of the same type already exists
+    int existingIndex = updatedPaymentMethods.indexWhere(
+      (method) => method['type'] == newMethod.type,
+    );
+
+    if (existingIndex != -1) {
+      // Update existing method
+      updatedPaymentMethods[existingIndex] = newMethod.toJson();
+    } else {
+      // Add new method
+      updatedPaymentMethods.add(newMethod.toJson());
+    }
+
+    _currentUser = _currentUser!.copyWith(
+      paymentMethods: updatedPaymentMethods,
+    );
+
     await saveCurrentUser();
     notifyListeners();
   }

@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:iconsax/iconsax.dart';
-import '../providers/user_provider_new.dart';
 import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
 
-class InviteScreen extends StatelessWidget {
+class InviteScreen extends StatefulWidget {
   static const String routeName = '/invite';
 
   const InviteScreen({super.key});
 
   @override
+  State<InviteScreen> createState() => _InviteScreenState();
+}
+
+class _InviteScreenState extends State<InviteScreen> {
+  final String _referralCode = 'EARNPLAY123'; // Static referral code for simplicity
+  final List<Map<String, dynamic>> _referredUsers = []; // Empty list for simplicity
+
+  @override
+  void initState() {
+    super.initState();
+    _initSharedPreferences();
+  }
+
+  Future<void> _initSharedPreferences() async {
+    // In a real app, you might load a referral code or referred users from _prefs
+    // For this task, we'll keep them static or empty.
+    setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProviderNew>(context);
-    final String referralCode = userProvider.currentUser?.referralCode ?? 'Generating...';
+    final String referralCode = _referralCode;
 
     final isDesktop = ResponsiveUtils.isDesktop(context);
     final isTablet = ResponsiveUtils.isTablet(context);
@@ -283,7 +300,7 @@ class InviteScreen extends StatelessWidget {
                 ),
                 SizedBox(height: isDesktop ? 16 : 8),
                 Expanded(
-                  child: (userProvider.currentUser?.referredUsers ?? []).isEmpty
+                  child: (_referredUsers).isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -389,10 +406,10 @@ class InviteScreen extends StatelessWidget {
                           ),
                         )
                       : ListView.builder(
-                          itemCount: userProvider.currentUser!.referredUsers.length,
+                          itemCount: _referredUsers.length,
                           itemBuilder: (context, index) {
                             final Map<String, dynamic> referredUser =
-                                userProvider.currentUser!.referredUsers[index];
+                                _referredUsers[index];
                             final int activeDays =
                                 referredUser['refereeActiveDays'] ?? 0;
                             final bool rewarded =

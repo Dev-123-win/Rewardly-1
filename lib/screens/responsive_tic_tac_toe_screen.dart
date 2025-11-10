@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 import 'dart:async';
 import 'dart:math';
-import '../providers/user_provider_new.dart';
+import '../providers/local_user_provider.dart';
 import '../providers/ad_provider_new.dart';
 import '../providers/config_provider.dart';
 import '../widgets/custom_app_bar.dart';
@@ -40,7 +40,7 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
   }
 
   void _loadGameStats() {
-    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
+    final userProvider = Provider.of<LocalUserProvider>(context, listen: false);
     final today = DateTime.now().toIso8601String().substring(0, 10);
     setState(() {
       totalGames =
@@ -195,7 +195,7 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
 
   void _showWinDialog() async {
     final adProvider = Provider.of<AdProviderNew>(context, listen: false);
-    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
+    final userProvider = Provider.of<LocalUserProvider>(context, listen: false);
     final configProvider = Provider.of<ConfigProvider>(context, listen: false);
     final tictactoeReward =
         configProvider.appConfig['rewards']?['tictactoeReward'] ?? 4;

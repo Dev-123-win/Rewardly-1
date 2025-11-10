@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/services/game_service.dart';
-import 'user_provider_new.dart';
 import 'ad_provider_new.dart'; // Changed to ad_provider_new.dart
 
 // Game constants
@@ -103,13 +102,11 @@ class WhackAMoleProvider extends ChangeNotifier {
     _stoppedAt = DateTime.now();
     isPlaying = false;
 
-    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
     final adProvider = Provider.of<AdProviderNew>(context, listen: false); // Changed to AdProviderNew
 
     // Save base game coins if positive
     if (currentGameCoins > 0) {
       await GameService.handleGameEarnings(
-        userProvider: userProvider,
         amount: currentGameCoins,
         gameType: 'whack_a_mole',
         metadata: {
@@ -128,7 +125,6 @@ class WhackAMoleProvider extends ChangeNotifier {
 
           // Update user's coin balance with ad bonus
           await GameService.handleAdReward(
-            userProvider: userProvider,
             amount: adBonusCoins,
             source: 'whack_a_mole',
           );

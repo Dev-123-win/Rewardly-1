@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
-import '../providers/user_provider_new.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
 
@@ -18,12 +17,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _displayNameController = TextEditingController();
   bool _isLoading = false;
+  late SharedPreferences _prefs;
 
   @override
   void initState() {
     super.initState();
-    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
-    _displayNameController.text = userProvider.currentUser?.displayName ?? '';
+    _initSharedPreferences();
+  }
+
+  Future<void> _initSharedPreferences() async {
+    _prefs = await SharedPreferences.getInstance();
+    _displayNameController.text = _prefs.getString('displayName') ?? 'Guest User';
+    setState(() {});
   }
 
   Future<void> _updateProfile() async {
@@ -33,11 +38,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       });
 
       try {
-        // In a real app, you would have a method in UserProvider to update the user's profile.
-        // For this example, we'll just show a success message.
-        await Future.delayed(
-          const Duration(seconds: 1),
-        ); // Simulate network request
+        await _prefs.setString('displayName', _displayNameController.text);
+        await Future.delayed(const Duration(seconds: 1)); // Simulate network request
 
         if (mounted) {
           Navigator.of(context).pop();

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/user_provider_new.dart';
+import '../providers/local_user_provider.dart';
 import '../providers/config_provider.dart';
 
 class DailyRewardModal extends StatefulWidget {
@@ -19,7 +19,7 @@ class _DailyRewardModalState extends State<DailyRewardModal> {
     });
 
     try {
-      final userProvider = Provider.of<UserProviderNew>(context, listen: false);
+      final userProvider = Provider.of<LocalUserProvider>(context, listen: false);
       final configProvider = Provider.of<ConfigProvider>(context, listen: false);
       final int dailyRewardAmount = configProvider.getConfig('rewards.dailyReward', defaultValue: 10);
 

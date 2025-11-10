@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
-import '../providers/user_provider_new.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/ad_provider_new.dart';
 import '../widgets/custom_app_bar.dart';
 
@@ -16,26 +16,54 @@ class DailyBonusScreen extends StatefulWidget {
 
 class _DailyBonusScreenState extends State<DailyBonusScreen> {
   bool _isClaimingReward = false;
+  late SharedPreferences _prefs;
+
+  @override
+  void initState() {
+    super.initState();
+    _initSharedPreferences();
+  }
+
+  Future<void> _initSharedPreferences() async {
+    _prefs = await SharedPreferences.getInstance();
+    setState(() {}); // Rebuild to get initial streak/claimed status
+  }
+
+  int _getDailyStreak() {
+    return _prefs.getInt('dailyStreak') ?? 1;
+  }
+
+  Future<void> _setDailyStreak(int streak) async {
+    await _prefs.setInt('dailyStreak', streak);
+  }
+
+  bool _getHasClaimedToday() {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    return _prefs.getBool('dailyBonusClaimed_$today') ?? false;
+  }
+
+  Future<void> _setHasClaimedToday(bool claimed) async {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    await _prefs.setBool('dailyBonusClaimed_$today', claimed);
+  }
 
   Future<void> _claimDailyReward(int currentStreak) async {
-    if (_isClaimingReward) return;
+    if (_isClaimingReward || _getHasClaimedToday()) return;
 
     setState(() {
       _isClaimingReward = true;
     });
 
     final adProvider = Provider.of<AdProviderNew>(context, listen: false);
-    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
 
     // Show rewarded ad
     if (adProvider.rewardedAd != null) {
       await adProvider.showRewardedAd(
         onAdEarned: (reward) async {
           // Update user's coins and streak
-          await userProvider.recordGameReward(
-            gameType: 'dailyBonus',
-            amount: 10, // 10 coins per day
-          );
+          // For now, we'll just mark as claimed and update streak
+          // Actual coin update logic would go here, possibly in LocalUserProvider or similar
+          await _setHasClaimedToday(true);
 
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -47,9 +75,9 @@ class _DailyBonusScreenState extends State<DailyBonusScreen> {
 
           // Reset streak if completed 7 days
           if (currentStreak >= 7) {
-            await userProvider.resetDailyStreak();
+            await _setDailyStreak(1); // Reset to Day 1
           } else {
-            await userProvider.incrementDailyStreak();
+            await _setDailyStreak(currentStreak + 1);
           }
 
           setState(() {
@@ -211,12 +239,8 @@ class _DailyBonusScreenState extends State<DailyBonusScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final userProvider = Provider.of<UserProviderNew>(context);
-    final currentStreak = userProvider.currentUser?.dailyStreak ?? 1;
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    final hasClaimedToday =
-        userProvider.currentUser?.dailyStats[today]?['dailyBonusClaimed'] ??
-        false;
+    final currentStreak = _getDailyStreak();
+    final hasClaimedToday = _getHasClaimedToday();
 
     return Scaffold(
       appBar: CustomAppBar(

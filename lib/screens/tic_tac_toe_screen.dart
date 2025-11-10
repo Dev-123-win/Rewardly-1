@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
-import '../providers/user_provider_new.dart';
+import '../providers/local_user_provider.dart';
 import '../providers/ad_provider_new.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/tic_tac_toe_stats_dialog.dart';
@@ -43,10 +43,11 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
 
   Future<void> _loadGameStats() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     final userJson = prefs.getString('current_user');
     if (userJson == null) return;
 
-    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
+    final userProvider = Provider.of<LocalUserProvider>(context, listen: false);
     final todayString = DateTime.now().toIso8601String().substring(0, 10);
     final todayStats = userProvider.currentUser?.dailyStats[todayString] ?? {};
     final todayGames = todayStats['tictactoePlayed'] ?? 0;
@@ -259,7 +260,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     });
 
     // Update stats before showing dialog
-    final provider = Provider.of<UserProviderNew>(context, listen: false);
+    final provider = Provider.of<LocalUserProvider>(context, listen: false);
     final todayString = DateTime.now().toIso8601String().substring(0, 10);
     final todayStats = provider.currentUser?.dailyStats[todayString] ?? {};
 
@@ -309,6 +310,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       builder: (context) => TicTacToeResultDialog(
         result: result == 'X' ? 'win' : (result == 'O' ? 'lose' : 'draw'),
         onClaimCoins: () async {
+          if (!mounted) return; // Check mounted here
           Navigator.of(context).pop();
 
           if (result == 'O') {
@@ -338,16 +340,14 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
             );
           } else {
             if (!mounted) return;
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Ad not ready. Try again later.'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-              adProvider.loadRewardedAd();
-              _resetGame();
-            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Ad not ready. Try again later.'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            adProvider.loadRewardedAd();
+            _resetGame();
           }
         },
       ),

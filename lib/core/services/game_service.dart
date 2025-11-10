@@ -1,23 +1,21 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../providers/user_provider_new.dart';
 import '../../data/repositories/local_transaction_repository.dart';
 
 class GameService {
   static Future<void> handleGameEarnings({
-    required UserProviderNew userProvider,
     required int amount,
     required String gameType,
     required Map<String, dynamic> metadata,
   }) async {
-    if (amount <= 0 || userProvider.currentUser == null) return;
+    if (amount <= 0) return;
 
     final prefs = await SharedPreferences.getInstance();
     final transactionRepo = LocalTransactionRepository(prefs);
-    final currentUser = userProvider.currentUser!;
+    const String userId = 'local_user'; // Using a static user ID
 
     // Create transaction record
     await transactionRepo.addTransaction(
-      userId: currentUser.uid,
+      userId: userId,
       type: 'earning',
       subType: gameType,
       amount: amount,
@@ -26,26 +24,21 @@ class GameService {
         'date': DateTime.now().toIso8601String().substring(0, 10),
       },
     );
-
-    // Clear local data and reload it to ensure consistency
-    userProvider.clearUserData();
-    await userProvider.loadCurrentUser();
   }
 
   static Future<void> handleAdReward({
-    required UserProviderNew userProvider,
     required int amount,
     required String source,
   }) async {
-    if (amount <= 0 || userProvider.currentUser == null) return;
+    if (amount <= 0) return;
 
     final prefs = await SharedPreferences.getInstance();
     final transactionRepo = LocalTransactionRepository(prefs);
-    final currentUser = userProvider.currentUser!;
+    const String userId = 'local_user'; // Using a static user ID
 
     // Create transaction record
     await transactionRepo.addTransaction(
-      userId: currentUser.uid,
+      userId: userId,
       type: 'earning',
       subType: 'ad_reward',
       amount: amount,
@@ -54,9 +47,5 @@ class GameService {
         'date': DateTime.now().toIso8601String().substring(0, 10),
       },
     );
-
-    // Clear local data and reload it to ensure consistency
-    userProvider.clearUserData();
-    await userProvider.loadCurrentUser();
   }
 }

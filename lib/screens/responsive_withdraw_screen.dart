@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/user_provider_new.dart';
+import '../providers/local_user_provider.dart';
 import '../providers/config_provider.dart';
 import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
@@ -27,7 +27,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   @override
   void initState() {
     super.initState();
-    final user = Provider.of<UserProviderNew>(context, listen: false).currentUser;
+    final user = Provider.of<LocalUserProvider>(context, listen: false).currentUser;
     if (user?.withdrawalInfo != null) {
       final info = user!.withdrawalInfo!;
       _upiController.text = info['upiId'] ?? '';
@@ -44,7 +44,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       });
 
       try {
-        final userProvider = Provider.of<UserProviderNew>(context, listen: false);
+        final userProvider = Provider.of<LocalUserProvider>(context, listen: false);
         final configProvider = Provider.of<ConfigProvider>(
           context,
           listen: false,
@@ -98,7 +98,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProviderNew>(context);
+    final userProvider = Provider.of<LocalUserProvider>(context);
     final configProvider = Provider.of<ConfigProvider>(context);
     final isDesktop = ResponsiveUtils.isDesktop(context);
     final isTablet = ResponsiveUtils.isTablet(context);

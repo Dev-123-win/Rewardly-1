@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import '../core/utils/responsive_utils.dart';
-import 'auth_screen.dart';
+import 'main_container_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -116,7 +116,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 onPressed: () {
                                   Navigator.of(context).pushReplacement(
                                     MaterialPageRoute(
-                                      builder: (context) => const AuthScreen(),
+                                      builder: (context) =>
+                                          const MainContainerScreen(),
                                     ),
                                   );
                                 },
@@ -147,7 +148,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                       Navigator.of(context).pushReplacement(
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                              const AuthScreen(),
+                                              const MainContainerScreen(),
                                         ),
                                       );
                                     },

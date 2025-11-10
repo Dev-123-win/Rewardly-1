@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert'; // For JSON encoding/decoding
 import '../models/payment_method.dart';
-import '../providers/user_provider_new.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   const PaymentMethodsScreen({super.key});
@@ -19,6 +19,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   final _ifscController = TextEditingController();
   final _accountHolderNameController = TextEditingController();
 
+  late SharedPreferences _prefs;
+
   @override
   void dispose() {
     _upiController.dispose();
@@ -31,34 +33,36 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadSavedPaymentMethods();
-    });
+    _initSharedPreferences();
+  }
+
+  Future<void> _initSharedPreferences() async {
+    _prefs = await SharedPreferences.getInstance();
+    _loadSavedPaymentMethods();
   }
 
   void _loadSavedPaymentMethods() {
-    final userProvider = Provider.of<UserProviderNew>(context, listen: false);
-    final paymentMethods = userProvider.currentUser?.paymentMethods ?? [];
-
-    for (final methodJson in paymentMethods) {
-      final method = PaymentMethod.fromJson(methodJson);
-      if (method.type == 'upi') {
-        _upiController.text = method.details['upiId'] ?? '';
-      } else if (method.type == 'bank') {
-        _accountNumberController.text = method.details['accountNumber'] ?? '';
-        _ifscController.text = method.details['ifscCode'] ?? '';
-        _accountHolderNameController.text =
-            method.details['accountHolderName'] ?? '';
-      }
+    final String? savedUpi = _prefs.getString('upiMethod');
+    if (savedUpi != null) {
+      final method = PaymentMethod.fromJson(jsonDecode(savedUpi));
+      _upiController.text = method.details['upiId'] ?? '';
     }
+
+    final String? savedBank = _prefs.getString('bankMethod');
+    if (savedBank != null) {
+      final method = PaymentMethod.fromJson(jsonDecode(savedBank));
+      _accountNumberController.text = method.details['accountNumber'] ?? '';
+      _ifscController.text = method.details['ifscCode'] ?? '';
+      _accountHolderNameController.text =
+          method.details['accountHolderName'] ?? '';
+    }
+    setState(() {});
   }
 
   Future<void> _saveUPIDetails() async {
     if (_formKeyUPI.currentState?.validate() ?? false) {
-      final userProvider = Provider.of<UserProviderNew>(context, listen: false);
       final upiMethod = PaymentMethod.createUPI(_upiController.text);
-
-      await userProvider.updatePaymentMethod(upiMethod);
+      await _prefs.setString('upiMethod', jsonEncode(upiMethod.toJson()));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('UPI details saved successfully')),
@@ -69,14 +73,12 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
   Future<void> _saveBankDetails() async {
     if (_formKeyBank.currentState?.validate() ?? false) {
-      final userProvider = Provider.of<UserProviderNew>(context, listen: false);
       final bankMethod = PaymentMethod.createBankAccount(
         accountNumber: _accountNumberController.text,
         ifscCode: _ifscController.text,
         accountHolderName: _accountHolderNameController.text,
       );
-
-      await userProvider.updatePaymentMethod(bankMethod);
+      await _prefs.setString('bankMethod', jsonEncode(bankMethod.toJson()));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Bank details saved successfully')),

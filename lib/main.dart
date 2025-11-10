@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 // Core
@@ -13,13 +13,18 @@ import 'providers/local_config_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/ad_provider_new.dart';
 
+// Screens
+import 'screens/main_container_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Mobile Ads SDK
   await MobileAds.instance.initialize();
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.white,
+      statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
       statusBarBrightness: Brightness.light,
     ),
@@ -29,9 +34,16 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => LocalConfigProvider()),
-        ChangeNotifierProvider(create: (_) => LocalUserProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => AdProviderNew()),
+        ChangeNotifierProvider(
+          create: (context) => LocalUserProvider(
+            configProvider: Provider.of<LocalConfigProvider>(
+              context,
+              listen: false,
+            ),
+          ),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -47,7 +59,7 @@ class MyApp extends StatelessWidget {
       title: 'EarnPlay',
       theme: AppTheme.theme,
       onGenerateRoute: AppRouter.generateRoute,
-      initialRoute: '/',
+      home: const MainContainerScreen(),
     );
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
-import '../providers/user_provider_new.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/daily_reward_modal.dart';
 import '../widgets/custom_app_bar.dart';
 import '../core/utils/responsive_utils.dart';
@@ -72,8 +71,33 @@ class _ResponsiveHomeScreenState extends State<ResponsiveHomeScreen> {
   }
 }
 
-class HomeTab extends StatelessWidget {
+class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
+
+  @override
+  State<HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<HomeTab> {
+  late SharedPreferences _prefs;
+  int _coins = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _initSharedPreferences();
+  }
+
+  Future<void> _initSharedPreferences() async {
+    _prefs = await SharedPreferences.getInstance();
+    _loadCoins();
+  }
+
+  void _loadCoins() {
+    setState(() {
+      _coins = _prefs.getInt('coins') ?? 0;
+    });
+  }
 
   Widget _buildEarningMethodCard(
     BuildContext context,
@@ -117,7 +141,6 @@ class HomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProviderNew>(context);
     final isTabletOrDesktop = !ResponsiveUtils.isMobile(context);
 
     return Scaffold(
@@ -130,7 +153,7 @@ class HomeTab extends StatelessWidget {
               children: [
                 const Icon(Icons.monetization_on),
                 const SizedBox(width: 4),
-                Text(userProvider.currentUser?.coins.toString() ?? '0'),
+                Text('$_coins'),
               ],
             ),
           ),
