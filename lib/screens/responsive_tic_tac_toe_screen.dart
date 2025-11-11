@@ -34,9 +34,8 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
   void initState() {
     super.initState();
     _loadGameStats();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AdProviderNew>(context, listen: false).loadRewardedAd();
-    });
+    // AdProviderNew now preloads ads in its constructor, so no need to call loadRewardedAd here.
+    // If an ad is needed immediately, showRewardedAd will handle loading if not already loaded.
   }
 
   void _loadGameStats() {
@@ -229,7 +228,9 @@ class _ResponsiveTicTacToeScreenState extends State<ResponsiveTicTacToeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ad not ready. No coins awarded.')),
       );
-      adProvider.loadRewardedAd();
+      // AdProviderNew now handles preloading internally.
+      // Calling showRewardedAd will attempt to load if not already loaded.
+      // adProvider.loadRewardedAd(); // No longer needed here
     }
   }
 

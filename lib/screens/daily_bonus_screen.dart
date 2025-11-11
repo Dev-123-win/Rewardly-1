@@ -28,22 +28,47 @@ class _DailyBonusScreenState extends State<DailyBonusScreen> {
     return localUserProvider.currentUser?.dailyStats[today]?['dailyBonusClaimed'] ?? false;
   }
 
+  // Helper to determine if a specific day (1-7) in the streak cycle is claimed
+  bool _getHasClaimedForDisplayDay(int displayDay, LocalUserProvider localUserProvider, int currentStreak) {
+    final currentUser = localUserProvider.currentUser;
+    if (currentUser == null) return false;
+
+    final today = DateTime.now();
+    final todayString = today.toIso8601String().substring(0, 10);
+
+    // Check if the bonus for the *actual current day* has been claimed
+    final bool hasClaimedToday = currentUser.dailyStats[todayString]?['dailyBonusClaimed'] ?? false;
+
+    if (displayDay < currentStreak) {
+      // For past days in the streak, they are considered claimed.
+      // This assumes the streak is correctly maintained by LocalUserProvider.
+      return true;
+    } else if (displayDay == currentStreak) {
+      // For the current day in the streak, it's claimed if hasClaimedToday is true.
+      return hasClaimedToday;
+    }
+    // For future days in the streak, they are not claimed.
+    return false;
+  }
+
   Future<void> _claimDailyReward(int dayToClaim) async {
-    if (_isClaimingReward || _getHasClaimedToday(Provider.of<LocalUserProvider>(context, listen: false))) return;
+    // Only allow claiming if it's the current streak day and not already claimed today
+    final localUserProvider = Provider.of<LocalUserProvider>(context, listen: false);
+    final currentStreak = localUserProvider.currentUser?.dailyStreak ?? 1;
+    final hasClaimedToday = _getHasClaimedToday(localUserProvider);
+
+    if (_isClaimingReward || dayToClaim != currentStreak || hasClaimedToday) return;
 
     setState(() {
       _isClaimingReward = true;
     });
 
-    final localUserProvider = Provider.of<LocalUserProvider>(context, listen: false);
     final adProvider = Provider.of<AdProviderNew>(context, listen: false);
-
     const int coinsToAward = 10; // Daily reward amount
 
     try {
       // 1. Collect coins and update streak immediately via LocalUserProvider
       await localUserProvider.claimDailyReward(coinsToAward);
-      // No need to call _setHasClaimedToday, as LocalUserProvider handles persistence and notifies listeners.
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -53,24 +78,13 @@ class _DailyBonusScreenState extends State<DailyBonusScreen> {
         ),
       );
 
-      // 2. After snackbar, show rewarded ad
-      adProvider.loadRewardedAd(); // Ensure ad is loaded
-      if (adProvider.rewardedAd != null) {
-        await adProvider.showRewardedAd(
-          onAdEarned: (reward) {
-            // Ad earned, but coins are already given by claimDailyReward.
-            // This callback can be used for additional rewards if needed.
-          },
-        );
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No ad available. Please try again later.'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      // 2. After snackbar, show rewarded ad. AdProviderNew handles preloading.
+      await adProvider.showRewardedAd(
+        onAdEarned: (reward) {
+          // Ad earned, but coins are already given by claimDailyReward.
+          // This callback can be used for additional rewards if needed.
+        },
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -83,7 +97,7 @@ class _DailyBonusScreenState extends State<DailyBonusScreen> {
       setState(() {
         _isClaimingReward = false;
       });
-      adProvider.loadRewardedAd(); // Load next ad for future claims
+      // AdProviderNew handles preloading internally, no need to explicitly call loadRewardedAd here.
     }
   }
 
@@ -498,13 +512,14 @@ class _DailyBonusScreenState extends State<DailyBonusScreen> {
                         child: Column(
                           children: List.generate(7, (index) {
                             final day = index + 1;
-                            // isClaimed logic needs to be updated to use localUserProvider
-                            final bool isDayClaimed = localUserProvider.currentUser?.dailyStats[DateTime.now().toIso8601String().substring(0, 10)]?['dailyBonusClaimed'] ?? false;
+                            final bool isCurrentDayInStreak = day == currentStreak;
+                            final bool isDayClaimed = _getHasClaimedForDisplayDay(day, localUserProvider, currentStreak);
+
                             return _buildRewardCard(
                               context,
                               day,
-                              day == currentStreak,
-                              day < currentStreak || isDayClaimed, // Use isDayClaimed here
+                              isCurrentDayInStreak,
+                              isDayClaimed,
                               hasClaimedToday,
                             );
                           }),

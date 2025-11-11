@@ -7,27 +7,17 @@ Linux (desktop)              • linux          • linux-x64   • IDX GNU/Linu
 [3]: Linux (linux)
 Please choose one (or "q" to quit): 1
 Launching lib/main.dart on sdk gphone64 x86 64 in debug mode...
-Running Gradle task 'assembleDebug'...                             41.8s
+Running Gradle task 'assembleDebug'...                             40.8s
 ✓ Built build/app/outputs/flutter-apk/app-debug.apk
-Installing build/app/outputs/flutter-apk/app-debug.apk...        1,044ms
-D/FlutterJNI(12869): Beginning load of flutter...
-D/FlutterJNI(12869): flutter (null) was loaded normally!
-I/flutter (12869): [IMPORTANT:flutter/shell/platform/android/android_context_gl_impeller.cc(104)] Using the Impeller rendering backend (OpenGLES).
+Installing build/app/outputs/flutter-apk/app-debug.apk...        1,214ms
+D/FlutterJNI( 6329): Beginning load of flutter...
+D/FlutterJNI( 6329): flutter (null) was loaded normally!
+I/flutter ( 6329): [IMPORTANT:flutter/shell/platform/android/android_context_gl_impeller.cc(104)] Using the Impeller rendering backend (OpenGLES).
 Syncing files to device sdk gphone64 x86 64...                  
-I/Choreographer(12869): Skipped 60 frames!  The application may be doing too much work on its main thread.
-D/WindowLayoutComponentImpl(12869): Register WindowLayoutInfoListener on Context=com.example.myapp.MainActivity@5362c4c, of which baseContext=android.app.ContextImpl@b4bb8e4
-W/upreet.rewardly(12869): ClassLoaderContext classpath size mismatch. expected=1, found=0 (DLC[];PCL[base.apk*2812784813]{PCL[/system/framework/org.apache.http.legacy.jar*4247870504]#PCL[/system/framework/com.android.media.remotedisplay.jar*487574312]#PCL[/system/framework/com.android.location.provider.jar*1570284764]#PCL[/system_ext/framework/androidx.window.extensions.jar*1030441313]#PCL[/system_ext/framework/androidx.window.sidecar.jar*3860983653]} | DLC[];PCL[])
-I/upreet.rewardly(12869): AssetManager2(0x7696dffb2478) locale list changing from [] to [en-US]
-I/DynamiteModule(12869): Considering local module com.google.android.gms.ads.dynamite:0 and remote module com.google.android.gms.ads.dynamite:253405700
-I/DynamiteModule(12869): Selected remote version of com.google.android.gms.ads.dynamite, version >= 253405700
-W/System  (12869): ClassLoader referenced unknown path: 
-D/nativeloader(12869): Configuring clns-11 for other apk . target_sdk_version=36, uses_libraries=, library_path=/data/app/~~q4r8fngoJyrl3wsE9rzjuQ==/com.google.android.gms-pEMCgZNCuRkLdT-WMY7Iog==/lib/x86_64:/data/app/~~q4r8fngoJyrl3wsE9rzjuQ==/com.google.android.gms-pEMCgZNCuRkLdT-WMY7Iog==/base.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/com.google.android.gms
-W/upreet.rewardly(12869): ClassLoaderContext classpath element checksum mismatch. expected=2812784813, found=1367972487 (DLC[];PCL[base.apk*2812784813]{PCL[/system/framework/org.apache.http.legacy.jar*4247870504]#PCL[/system/framework/com.android.media.remotedisplay.jar*487574312]#PCL[/system/framework/com.android.location.provider.jar*1570284764]#PCL[/system_ext/framework/androidx.window.extensions.jar*1030441313]#PCL[/system_ext/framework/androidx.window.sidecar.jar*3860983653]} | DLC[];PCL[/data/app/~~_XjFrJEn55kt6syd5s1rxg==/com.supreet.rewardly-_Syh9esTR8FBsVHc4etDxQ==/base.apk*1367972487]{PCL[/system_ext/framework/androidx.window.extensions.jar*1030441313]#PCL[/system_ext/framework/androidx.window.sidecar.jar*3860983653]})
-I/upreet.rewardly(12869): AssetManager2(0x7696dffad978) locale list changing from [] to [en-US]
-I/upreet.rewardly(12869): AssetManager2(0x7696dffb1b18) locale list changing from [] to [en-US]
-Syncing files to device sdk gphone64 x86 64...                     550ms
-D/DynamitePackage(12869): Instantiated singleton DynamitePackage.
-D/DynamitePackage(12869): Instantiating com.google.android.gms.ads.ChimeraMobileAdsSettingManagerCreatorImpl
+I/Choreographer( 6329): Skipped 50 frames!  The application may be doing too much work on its main thread.
+D/WindowLayoutComponentImpl( 6329): Register WindowLayoutInfoListener on Context=com.example.myapp.MainActivity@32fc8b2, of which baseContext=android.app.ContextImpl@5c3bc0a
+I/upreet.rewardly( 6329): AssetManager2(0x762f7e86ba98) locale list changing from [] to [en-US]
+Syncing files to device sdk gphone64 x86 64...                     310ms
 
 Flutter run key commands.
 r Hot reload. 🔥🔥🔥
@@ -37,87 +27,169 @@ d Detach (terminate "flutter run" but leave application running).
 c Clear the screen
 q Quit (terminate the application on the device).
 
-A Dart VM Service on sdk gphone64 x86 64 is available at: http://127.0.0.1:38603/Or283ldzoYM=/
-The Flutter DevTools debugger and profiler on sdk gphone64 x86 64 is available at: http://127.0.0.1:9101?uri=http://127.0.0.1:38603/Or283ldzoYM=/
-D/CompatChangeReporter(12869): Compat change id reported: 288912692; UID 10217; state: ENABLED
-I/flutter (12869): LocalUserProvider: Loading user. Current user ID from prefs: null
-I/flutter (12869): LocalUserProvider: Signing in user with ID: local_1762825930768
-I/upreet.rewardly(12869): AssetManager2(0x7696dffa7578) locale list changing from [] to [en-US]
-I/WebViewFactory(12869): Loading com.google.android.webview version 133.0.6943.137 (code 694313738)
-I/upreet.rewardly(12869): AssetManager2(0x7696dffa4058) locale list changing from [] to [en-US]
-I/upreet.rewardly(12869): AssetManager2(0x7696dffa3d38) locale list changing from [] to [en-US]
-I/upreet.rewardly(12869): AssetManager2(0x7696dffa9198) locale list changing from [] to [en-US]
-I/upreet.rewardly(12869): AssetManager2(0x7696dffb0538) locale list changing from [] to [en-US]
-I/upreet.rewardly(12869): AssetManager2(0x7696dffb3418) locale list changing from [] to [en-US]
-I/upreet.rewardly(12869): AssetManager2(0x7696dffb2dd8) locale list changing from [] to [en-US]
-V/ResourcesManager(12869): The following library key has been added: ResourcesKey{ mHash=83e2eec7 mResDir=null mSplitDirs=[] mOverlayDirs=[] mLibDirs=[/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/WebViewGoogle.apk,/data/app/~~F-zNUuOd_4w0Yr7Fppq51w==/com.google.android.trichromelibrary_694313738-Oded3EEu2fmB1nQuS2CohQ==/TrichromeLibrary.apk] mDisplayId=0 mOverrideConfig=v36 mCompatInfo={440dpi always-compat} mLoaders=[]}
-W/upreet.rewardly(12869): Failed to find entry 'classes.dex': Entry not found
-D/nativeloader(12869): Configuring clns-12 for other apk /data/app/~~F-zNUuOd_4w0Yr7Fppq51w==/com.google.android.trichromelibrary_694313738-Oded3EEu2fmB1nQuS2CohQ==/TrichromeLibrary.apk. target_sdk_version=34, uses_libraries=ALL, library_path=/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/lib/x86_64:/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/WebViewGoogle.apk!/lib/x86_64:/data/app/~~F-zNUuOd_4w0Yr7Fppq51w==/com.google.android.trichromelibrary_694313738-Oded3EEu2fmB1nQuS2CohQ==/TrichromeLibrary.apk!/lib/x86_64, permitted_path=/data:/mnt/expand
-D/ApplicationLoaders(12869): Returning zygote-cached class loader: /system_ext/framework/androidx.window.extensions.jar
-D/nativeloader(12869): Configuring clns-13 for other apk /data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/WebViewGoogle.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/lib/x86_64:/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/WebViewGoogle.apk!/lib/x86_64:/data/app/~~F-zNUuOd_4w0Yr7Fppq51w==/com.google.android.trichromelibrary_694313738-Oded3EEu2fmB1nQuS2CohQ==/TrichromeLibrary.apk!/lib/x86_64, permitted_path=/data:/mnt/expand
-I/cr_WVCFactoryProvider(12869): version=133.0.6943.137 (694313738) minSdkVersion=29 isBundle=false multiprocess=true packageId=2
-D/nativeloader(12869): Load /data/app/~~F-zNUuOd_4w0Yr7Fppq51w==/com.google.android.trichromelibrary_694313738-Oded3EEu2fmB1nQuS2CohQ==/TrichromeLibrary.apk!/lib/x86_64/libmonochrome_64.so using class loader ns clns-13 (caller=/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/WebViewGoogle.apk): ok
-D/nativeloader(12869): Load /system/lib64/libwebviewchromium_plat_support.so using class loader ns clns-13 (caller=/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/WebViewGoogle.apk): ok
-E/chromium(12869): [1111/015211.190805:ERROR:variations_seed_loader.cc(39)] Seed missing signature.
-I/chromium(12869): [1111/015211.225478:INFO:variations_seed_loader.cc(67)] Failed to open file for reading.: No such file or directory (2)
-I/cr_LibraryLoader(12869): Successfully loaded native library
-I/cr_CachingUmaRecorder(12869): Flushed 6 samples from 6 histograms, 0 samples were dropped.
-I/cr_CombinedPProvider(12869): #registerProvider() provider:WV.C8@6d1f96c isPolicyCacheEnabled:false policyProvidersSize:0
-I/cr_PolicyProvider(12869): #setManagerAndSource() 0
-I/cr_CombinedPProvider(12869): #linkNativeInternal() 1
-I/cr_AppResProvider(12869): #getApplicationRestrictionsFromUserManager() Bundle[EMPTY_PARCEL]
-I/cr_PolicyProvider(12869): #notifySettingsAvailable() 0
-I/cr_CombinedPProvider(12869): #onSettingsAvailable() 0
-I/cr_CombinedPProvider(12869): #flushPolicies()
-I/upreet.rewardly(12869): AssetManager2(0x7696dffadfb8) locale list changing from [] to [en-US]
-I/upreet.rewardly(12869): AssetManager2(0x7696dffafbd8) locale list changing from [] to [en-US]
-I/Choreographer(12869): Skipped 98 frames!  The application may be doing too much work on its main thread.
-I/CameraManagerGlobal(12869): Connecting to camera service
-I/flutter (12869): HomeScreen build called. Current time: 2025-11-11 01:52:13.617517
-I/flutter (12869): HomeScreen: Coins from provider: 0
-D/ProfileInstaller(12869): Installing profile for com.supreet.rewardly
-W/cr_media(12869): BLUETOOTH_CONNECT permission is missing.
-W/cr_media(12869): getBluetoothAdapter() requires BLUETOOTH permission
-W/cr_media(12869): registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
-W/libc    (12869): Access denied finding property "vendor.mesa.log"
-W/libc    (12869): Access denied finding property "vendor.mesa.log.file"
-E/MESA    (12869): Failed to open rendernode: No such file or directory
-I/Choreographer(12869): Skipped 146 frames!  The application may be doing too much work on its main thread.
-D/vulkan  (12869): searching for layers in '/data/app/~~_XjFrJEn55kt6syd5s1rxg==/com.supreet.rewardly-_Syh9esTR8FBsVHc4etDxQ==/lib/x86_64'
-D/vulkan  (12869): searching for layers in '/data/app/~~_XjFrJEn55kt6syd5s1rxg==/com.supreet.rewardly-_Syh9esTR8FBsVHc4etDxQ==/base.apk!/lib/x86_64'
-W/libc    (12869): Access denied finding property "vendor.mesa.vk.trace.per.submit"
-W/libc    (12869): Access denied finding property "vendor.mesa.gallium.print.optio"
-W/libc    (12869): Access denied finding property "vendor.mesa.vk.trace.frame"
-W/libc    (12869): Access denied finding property "vendor.mesa.vk.wsi.headless.swa"
-I/upreet.rewardly(12869): Background concurrent mark compact GC freed 5326KB AllocSpace bytes, 27(888KB) LOS objects, 49% free, 4622KB/9244KB, paused 701us,5.042ms total 821.082ms
-W/chromium(12869): [WARNING:viz_main_impl.cc(85)] VizNullHypothesis is disabled (not a warning)
-D/InsetsController(12869): hide(ime(), fromIme=false)
-I/ImeTracker(12869): com.supreet.rewardly:a0c9dfba: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
-I/Ads     (12869): JS: The jsLoaded GMSG has been sent (https://googleads.g.doubleclick.net/mads/static/sdk/native/sdk-core-v40.html:1009)
-I/chromium(12869): [INFO:CONSOLE(1009)] "The jsLoaded GMSG has been sent", source: https://googleads.g.doubleclick.net/mads/static/sdk/native/sdk-core-v40.html (1009)
-I/flutter (12869): LocalUserProvider: Attempting to claim daily reward for user ID: local_1762825930768
-I/flutter (12869): LocalTransactionRepository: Adding transaction for userId: local_1762825930768, type: earning, subType: daily_reward, amount: 10
-I/flutter (12869): LocalTransactionRepository: Transaction added and saved for userId: local_1762825930768. Total transactions: 1
-I/flutter (12869): LocalUserProvider: Added transaction for 10 coins for user ID: local_1762825930768
-I/flutter (12869): LocalTransactionRepository: Getting balance for userId: local_1762825930768. Found 1 transactions. Calculated balance: 10
-I/flutter (12869): LocalUserProvider: Updated balance after transaction: 10 for user ID: local_1762825930768
-I/flutter (12869): LocalUserProvider: Notified listeners with new user data for user ID: local_1762825930768. New coins: 10
-I/DynamiteModule(12869): Considering local module com.google.android.gms.ads.dynamite:0 and remote module com.google.android.gms.ads.dynamite:253405700
-I/DynamiteModule(12869): Selected remote version of com.google.android.gms.ads.dynamite, version >= 253405700
-V/DynamiteModule(12869): Dynamite loader version >= 2, using loadModule2NoCrashUtils
-I/upreet.rewardly(12869): AssetManager2(0x7696dffde398) locale list changing from [] to [en-US]
-I/upreet.rewardly(12869): AssetManager2(0x7696dffdecf8) locale list changing from [] to [en-US]
-I/upreet.rewardly(12869): AssetManager2(0x7696dffad658) locale list changing from [] to [en-US]
-I/Ads     (12869): This request is sent from a test device.
-D/nativeloader(12869): Configuring clns-14 for other apk . target_sdk_version=36, uses_libraries=ALL, library_path=, permitted_path=/data:/mnt/expand
-W/AdWorker(Defaul(12869): type=1400 audit(0.0:180): avc:  granted  { execute } for  path="/data/data/com.supreet.rewardly/app_pccache/6/6C7F73DE6E5A16BADDAF550035D4F0CD53753F27/pcam.jar" dev="dm-55" ino=369206 scontext=u:r:untrusted_app:s0:c217,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c217,c256,c512,c768 tclass=file app=com.supreet.rewardly
-D/nativeloader(12869): Load /data/user/0/com.supreet.rewardly/app_pccache/6/6C7F73DE6E5A16BADDAF550035D4F0CD53753F27/pcam.jar!/libdDAB442FAC850.so using isolated ns clns-14 (caller=/data/user/0/com.supreet.rewardly/app_pccache/6/6C7F73DE6E5A16BADDAF550035D4F0CD53753F27/pcam.jar): ok
-W/Ads     (12869): Invoke Firebase method getInstance error.
-W/Ads     (12869): The Google Mobile Ads SDK will not integrate with Firebase. Admob/Firebase integration requires the latest Firebase SDK jar, but Firebase SDK is either missing or out of date
-W/ServiceBindIntentUtils(12869): Dynamic lookup for intent failed for action: com.google.android.gms.ads.service.CACHE
-W/ServiceBindIntentUtils(12869): Dynamic lookup for intent failed for action: com.google.android.gms.ads.service.START
-I/upreet.rewardly(12869): Background concurrent mark compact GC freed 3404KB AllocSpace bytes, 14(452KB) LOS objects, 49% free, 5925KB/11MB, paused 1.216ms,4.769ms total 114.559ms
-I/flutter (12869): HomeScreen build called. Current time: 2025-11-11 01:52:24.088494
-I/flutter (12869): HomeScreen: Coins from provider: 10
-I/Ads     (12869): Ad failed to load : 3
-W/WindowOnBackDispatcher(12869): sendCancelIfRunning: isInProgress=false callback=io.flutter.embedding.android.FlutterActivity$1@870fbe4
+A Dart VM Service on sdk gphone64 x86 64 is available at: http://127.0.0.1:42201/mkhdNvPZDac=/
+The Flutter DevTools debugger and profiler on sdk gphone64 x86 64 is available at: http://127.0.0.1:9101?uri=http://127.0.0.1:42201/mkhdNvPZDac=/
+D/CompatChangeReporter( 6329): Compat change id reported: 288912692; UID 10217; state: ENABLED
+I/upreet.rewardly( 6329): AssetManager2(0x762f7e865378) locale list changing from [] to [en-US]
+I/WebViewFactory( 6329): Loading com.google.android.webview version 133.0.6943.137 (code 694313738)
+I/upreet.rewardly( 6329): AssetManager2(0x762f7e866638) locale list changing from [] to [en-US]
+I/upreet.rewardly( 6329): AssetManager2(0x762f7e8659b8) locale list changing from [] to [en-US]
+I/upreet.rewardly( 6329): AssetManager2(0x762f7e873ab8) locale list changing from [] to [en-US]
+I/upreet.rewardly( 6329): AssetManager2(0x762f7e874418) locale list changing from [] to [en-US]
+I/upreet.rewardly( 6329): AssetManager2(0x762f7e86e018) locale list changing from [] to [en-US]
+I/upreet.rewardly( 6329): AssetManager2(0x762f7e86fc38) locale list changing from [] to [en-US]
+V/ResourcesManager( 6329): The following library key has been added: ResourcesKey{ mHash=83e2eec7 mResDir=null mSplitDirs=[] mOverlayDirs=[] mLibDirs=[/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/WebViewGoogle.apk,/data/app/~~F-zNUuOd_4w0Yr7Fppq51w==/com.google.android.trichromelibrary_694313738-Oded3EEu2fmB1nQuS2CohQ==/TrichromeLibrary.apk] mDisplayId=0 mOverrideConfig=v36 mCompatInfo={440dpi always-compat} mLoaders=[]}
+W/upreet.rewardly( 6329): Failed to find entry 'classes.dex': Entry not found
+D/nativeloader( 6329): Configuring clns-10 for other apk /data/app/~~F-zNUuOd_4w0Yr7Fppq51w==/com.google.android.trichromelibrary_694313738-Oded3EEu2fmB1nQuS2CohQ==/TrichromeLibrary.apk. target_sdk_version=34, uses_libraries=ALL, library_path=/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/lib/x86_64:/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/WebViewGoogle.apk!/lib/x86_64:/data/app/~~F-zNUuOd_4w0Yr7Fppq51w==/com.google.android.trichromelibrary_694313738-Oded3EEu2fmB1nQuS2CohQ==/TrichromeLibrary.apk!/lib/x86_64, permitted_path=/data:/mnt/expand
+D/ApplicationLoaders( 6329): Returning zygote-cached class loader: /system_ext/framework/androidx.window.extensions.jar
+D/nativeloader( 6329): Configuring clns-11 for other apk /data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/WebViewGoogle.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/lib/x86_64:/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/WebViewGoogle.apk!/lib/x86_64:/data/app/~~F-zNUuOd_4w0Yr7Fppq51w==/com.google.android.trichromelibrary_694313738-Oded3EEu2fmB1nQuS2CohQ==/TrichromeLibrary.apk!/lib/x86_64, permitted_path=/data:/mnt/expand
+I/cr_WVCFactoryProvider( 6329): version=133.0.6943.137 (694313738) minSdkVersion=29 isBundle=false multiprocess=true packageId=2
+D/nativeloader( 6329): Load /data/app/~~F-zNUuOd_4w0Yr7Fppq51w==/com.google.android.trichromelibrary_694313738-Oded3EEu2fmB1nQuS2CohQ==/TrichromeLibrary.apk!/lib/x86_64/libmonochrome_64.so using class loader ns clns-11 (caller=/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/WebViewGoogle.apk): ok
+D/nativeloader( 6329): Load /system/lib64/libwebviewchromium_plat_support.so using class loader ns clns-11 (caller=/data/app/~~XQkT5isXgZTCxIM9xbrcCw==/com.google.android.webview-5ENRRlk_wLl3fO93vImmtA==/WebViewGoogle.apk): ok
+E/chromium( 6329): [1111/102640.735721:ERROR:variations_seed_loader.cc(39)] Seed missing signature.
+I/chromium( 6329): [1111/102640.739757:INFO:variations_seed_loader.cc(67)] Failed to open file for reading.: No such file or directory (2)
+I/cr_LibraryLoader( 6329): Successfully loaded native library
+I/cr_CachingUmaRecorder( 6329): Flushed 6 samples from 6 histograms, 0 samples were dropped.
+I/cr_CombinedPProvider( 6329): #registerProvider() provider:WV.C8@f685379 isPolicyCacheEnabled:false policyProvidersSize:0
+I/cr_PolicyProvider( 6329): #setManagerAndSource() 0
+I/cr_CombinedPProvider( 6329): #linkNativeInternal() 1
+I/cr_AppResProvider( 6329): #getApplicationRestrictionsFromUserManager() Bundle[EMPTY_PARCEL]
+I/cr_PolicyProvider( 6329): #notifySettingsAvailable() 0
+I/cr_CombinedPProvider( 6329): #onSettingsAvailable() 0
+I/cr_CombinedPProvider( 6329): #flushPolicies()
+I/upreet.rewardly( 6329): AssetManager2(0x762f7e86e978) locale list changing from [] to [en-US]
+W/chromium( 6329): [WARNING:dns_config_service_android.cc(81)] Failed to read DnsConfig.
+I/upreet.rewardly( 6329): AssetManager2(0x762f7e866c78) locale list changing from [] to [en-US]
+E/chromium( 6329): [ERROR:simple_file_enumerator.cc(21)] opendir /data/user/0/com.supreet.rewardly/cache/WebView/Default/HTTP Cache/Code Cache/wasm: No such file or directory (2)
+E/chromium( 6329): [ERROR:simple_index_file.cc(613)] Could not reconstruct index from disk
+E/chromium( 6329): [ERROR:simple_backend_impl.cc(758)] Simple Cache Backend: cache directory inaccessible right after creation; path: /data/user/0/com.supreet.rewardly/cache/WebView/Default/HTTP Cache/Code Cache/js
+E/chromium( 6329): [ERROR:disk_cache.cc(216)] Unable to create cache
+E/adservices( 6329): Failed to bind to measurement service: com.android.adservices.shared.common.exception.ServiceUnavailableException: Service is not available.
+I/Choreographer( 6329): Skipped 41 frames!  The application may be doing too much work on its main thread.
+I/CameraManagerGlobal( 6329): Connecting to camera service
+W/cr_media( 6329): BLUETOOTH_CONNECT permission is missing.
+W/cr_media( 6329): getBluetoothAdapter() requires BLUETOOTH permission
+W/cr_media( 6329): registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+W/libc    ( 6329): Access denied finding property "vendor.mesa.log"
+W/libc    ( 6329): Access denied finding property "vendor.mesa.log.file"
+E/MESA    ( 6329): Failed to open rendernode: No such file or directory
+D/vulkan  ( 6329): searching for layers in '/data/app/~~pXUIk5l_cBFYGPRwYwbjMQ==/com.supreet.rewardly-cbqJ5DPaNWr_d82gxZ42Jw==/lib/x86_64'
+D/vulkan  ( 6329): searching for layers in '/data/app/~~pXUIk5l_cBFYGPRwYwbjMQ==/com.supreet.rewardly-cbqJ5DPaNWr_d82gxZ42Jw==/base.apk!/lib/x86_64'
+W/libc    ( 6329): Access denied finding property "vendor.mesa.vk.trace.per.submit"
+W/libc    ( 6329): Access denied finding property "vendor.mesa.gallium.print.optio"
+W/libc    ( 6329): Access denied finding property "vendor.mesa.vk.trace.frame"
+W/libc    ( 6329): Access denied finding property "vendor.mesa.vk.wsi.headless.swa"
+W/chromium( 6329): [WARNING:viz_main_impl.cc(85)] VizNullHypothesis is disabled (not a warning)
+D/ProfileInstaller( 6329): Installing profile for com.supreet.rewardly
+I/flutter ( 6329): LocalTransactionRepository: Getting balance for userId: local_1762856142068. Found 1 transactions. Calculated balance: 10
+I/Choreographer( 6329): Skipped 98 frames!  The application may be doing too much work on its main thread.
+I/flutter ( 6329): Error: google_fonts was unable to load font Poppins-SemiBold because the following exception occurred:
+I/flutter ( 6329): Exception: Failed to load font with url https://fonts.gstatic.com/s/a/ec23e010878cf0841f910ef94f62294e40c7d77ce99be250dba2911d0a1a61cd.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/ec23e010878cf0841f910ef94f62294e40c7d77ce99be250dba2911d0a1a61cd.ttf
+I/flutter ( 6329): See https://docs.flutter.dev/development/data-and-backend/networking#platform-notes.
+I/flutter ( 6329): If troubleshooting doesn't solve the problem, please file an issue at https://github.com/flutter/flutter/issues/new/choose.
+E/flutter ( 6329): [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Exception: Failed to load font with url https://fonts.gstatic.com/s/a/ec23e010878cf0841f910ef94f62294e40c7d77ce99be250dba2911d0a1a61cd.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/ec23e010878cf0841f910ef94f62294e40c7d77ce99be250dba2911d0a1a61cd.ttf
+E/flutter ( 6329): #0      _httpFetchFontAndSaveToDevice (package:google_fonts/src/google_fonts_base.dart:270:5)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): #1      loadFontIfNecessary (package:google_fonts/src/google_fonts_base.dart:177:11)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): #2      googleFontsTextStyle.<anonymous closure> (package:google_fonts/src/google_fonts_base.dart:113:22)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): 
+I/flutter ( 6329): Error: google_fonts was unable to load font Poppins-Medium because the following exception occurred:
+I/flutter ( 6329): Exception: Failed to load font with url https://fonts.gstatic.com/s/a/c0ba5609d6562c76ab7db73fa9c9b283d210598cb318a45d4085f540e4753d60.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/c0ba5609d6562c76ab7db73fa9c9b283d210598cb318a45d4085f540e4753d60.ttf
+I/flutter ( 6329): See https://docs.flutter.dev/development/data-and-backend/networking#platform-notes.
+I/flutter ( 6329): If troubleshooting doesn't solve the problem, please file an issue at https://github.com/flutter/flutter/issues/new/choose.
+E/flutter ( 6329): [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Exception: Failed to load font with url https://fonts.gstatic.com/s/a/c0ba5609d6562c76ab7db73fa9c9b283d210598cb318a45d4085f540e4753d60.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/c0ba5609d6562c76ab7db73fa9c9b283d210598cb318a45d4085f540e4753d60.ttf
+E/flutter ( 6329): #0      _httpFetchFontAndSaveToDevice (package:google_fonts/src/google_fonts_base.dart:270:5)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): #1      loadFontIfNecessary (package:google_fonts/src/google_fonts_base.dart:177:11)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): #2      googleFontsTextStyle.<anonymous closure> (package:google_fonts/src/google_fonts_base.dart:113:22)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): 
+I/flutter ( 6329): Error: google_fonts was unable to load font Poppins-Regular because the following exception occurred:
+I/flutter ( 6329): Exception: Failed to load font with url https://fonts.gstatic.com/s/a/2dd6eb23c4972b346197d272c4e2479b89ed240ece4d2b0e0cd89f0c1caa2710.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/2dd6eb23c4972b346197d272c4e2479b89ed240ece4d2b0e0cd89f0c1caa2710.ttf
+I/flutter ( 6329): See https://docs.flutter.dev/development/data-and-backend/networking#platform-notes.
+I/flutter ( 6329): If troubleshooting doesn't solve the problem, please file an issue at https://github.com/flutter/flutter/issues/new/choose.
+E/flutter ( 6329): [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Exception: Failed to load font with url https://fonts.gstatic.com/s/a/2dd6eb23c4972b346197d272c4e2479b89ed240ece4d2b0e0cd89f0c1caa2710.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/2dd6eb23c4972b346197d272c4e2479b89ed240ece4d2b0e0cd89f0c1caa2710.ttf
+E/flutter ( 6329): #0      _httpFetchFontAndSaveToDevice (package:google_fonts/src/google_fonts_base.dart:270:5)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): #1      loadFontIfNecessary (package:google_fonts/src/google_fonts_base.dart:177:11)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): #2      googleFontsTextStyle.<anonymous closure> (package:google_fonts/src/google_fonts_base.dart:113:22)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): 
+I/flutter ( 6329): Error: google_fonts was unable to load font Inter-Medium because the following exception occurred:
+I/flutter ( 6329): Exception: Failed to load font with url https://fonts.gstatic.com/s/a/492dec3bc33255f9d81bd5fb18704ad72f96f9b9318e4171bc9f9be9dd4bf44b.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/492dec3bc33255f9d81bd5fb18704ad72f96f9b9318e4171bc9f9be9dd4bf44b.ttf
+I/flutter ( 6329): See https://docs.flutter.dev/development/data-and-backend/networking#platform-notes.
+I/flutter ( 6329): If troubleshooting doesn't solve the problem, please file an issue at https://github.com/flutter/flutter/issues/new/choose.
+E/flutter ( 6329): [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Exception: Failed to load font with url https://fonts.gstatic.com/s/a/492dec3bc33255f9d81bd5fb18704ad72f96f9b9318e4171bc9f9be9dd4bf44b.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/492dec3bc33255f9d81bd5fb18704ad72f96f9b9318e4171bc9f9be9dd4bf44b.ttf
+E/flutter ( 6329): #0      _httpFetchFontAndSaveToDevice (package:google_fonts/src/google_fonts_base.dart:270:5)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): #1      loadFontIfNecessary (package:google_fonts/src/google_fonts_base.dart:177:11)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): #2      googleFontsTextStyle.<anonymous closure> (package:google_fonts/src/google_fonts_base.dart:113:22)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): 
+I/flutter ( 6329): Error: google_fonts was unable to load font Inter-Regular because the following exception occurred:
+I/flutter ( 6329): Exception: Failed to load font with url https://fonts.gstatic.com/s/a/ecdb53099b1a68cd24c6900ea5beeafec81bd3c8cb9d0f3c51b9986583ba3982.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/ecdb53099b1a68cd24c6900ea5beeafec81bd3c8cb9d0f3c51b9986583ba3982.ttf
+I/flutter ( 6329): See https://docs.flutter.dev/development/data-and-backend/networking#platform-notes.
+I/flutter ( 6329): If troubleshooting doesn't solve the problem, please file an issue at https://github.com/flutter/flutter/issues/new/choose.
+E/flutter ( 6329): [ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Exception: Failed to load font with url https://fonts.gstatic.com/s/a/ecdb53099b1a68cd24c6900ea5beeafec81bd3c8cb9d0f3c51b9986583ba3982.ttf: ClientException with SocketException: Failed host lookup: 'fonts.gstatic.com' (OS Error: No address associated with hostname, errno = 7), uri=https://fonts.gstatic.com/s/a/ecdb53099b1a68cd24c6900ea5beeafec81bd3c8cb9d0f3c51b9986583ba3982.ttf
+E/flutter ( 6329): #0      _httpFetchFontAndSaveToDevice (package:google_fonts/src/google_fonts_base.dart:270:5)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): #1      loadFontIfNecessary (package:google_fonts/src/google_fonts_base.dart:177:11)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): #2      googleFontsTextStyle.<anonymous closure> (package:google_fonts/src/google_fonts_base.dart:113:22)
+E/flutter ( 6329): <asynchronous suspension>
+E/flutter ( 6329): 
+E/chromium( 6329): [ERROR:aw_browser_terminator.cc(165)] Renderer process (6432) crash detected (code -1).
+D/InsetsController( 6329): hide(ime(), fromIme=false)
+I/ImeTracker( 6329): com.supreet.rewardly:f0f3e766: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+D/GASS    ( 6329): Clearcut logging disabled
+I/Ads     ( 6329): This request is sent from a test device.
+D/zzavr   ( 6329): File /data/user/0/com.supreet.rewardly/cache/1731536186208.dex not found. No need for deletion
+D/GASS    ( 6329): Clearcut logging disabled
+W/Ads     ( 6329): Invoke Firebase method getInstance error.
+W/Ads     ( 6329): The Google Mobile Ads SDK will not integrate with Firebase. Admob/Firebase integration requires the latest Firebase SDK jar, but Firebase SDK is either missing or out of date
+E/zzgah   ( 6329): SafeAtomicHelper is broken!
+E/zzgah   ( 6329): java.lang.ExceptionInInitializerError
+E/zzgah   ( 6329): 	at com.google.android.gms.internal.ads.zzgah.<clinit>(com.google.android.gms:play-services-ads@@24.1.0:2)
+E/zzgah   ( 6329): 	at com.google.android.gms.internal.ads.zzgba.zza(com.google.android.gms:play-services-ads@@24.1.0:1)
+E/zzgah   ( 6329): 	at com.google.android.gms.internal.ads.zzesk.zza(com.google.android.gms:play-services-ads@@24.1.0:25)
+E/zzgah   ( 6329): 	at com.google.android.gms.internal.ads.zzctt.zzb(com.google.android.gms:play-services-ads@@24.1.0:4)
+E/zzgah   ( 6329): 	at com.google.android.gms.internal.ads.zzctt.zzc(com.google.android.gms:play-services-ads@@24.1.0:6)
+E/zzgah   ( 6329): 	at com.google.android.gms.internal.ads.zzcra.zzi(com.google.android.gms:play-services-ads@@24.1.0:4)
+E/zzgah   ( 6329): 	at com.google.android.gms.internal.ads.zzexl.zzb(com.google.android.gms:play-services-ads@@24.1.0:3)
+E/zzgah   ( 6329): 	at com.google.android.gms.internal.ads.zzexl.zzc(com.google.android.gms:play-services-ads@@24.1.0:1)
+E/zzgah   ( 6329): 	at com.google.android.gms.internal.ads.zzezs.zzb(com.google.android.gms:play-services-ads@@24.1.0:29)
+E/zzgah   ( 6329): 	at com.google.android.gms.internal.ads.zzezw.zzu(com.google.android.gms:play-services-ads@@24.1.0:11)
+E/zzgah   ( 6329): 	at com.google.android.gms.internal.ads.zzezw.zzf(com.google.android.gms:play-services-ads@@24.1.0:1)
+E/zzgah   ( 6329): 	at com.google.android.gms.internal.ads.zzbwc.zza(com.google.android.gms:play-services-ads-api@@24.1.0:3)
+E/zzgah   ( 6329): 	at com.google.android.gms.ads.rewarded.zzc.run(com.google.android.gms:play-services-ads-api@@24.1.0:2)
+E/zzgah   ( 6329): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+E/zzgah   ( 6329): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+E/zzgah   ( 6329): 	at java.lang.Thread.run(Thread.java:1119)
+E/zzgah   ( 6329): Caused by: java.lang.RuntimeException: java.lang.IllegalAccessException: Class com.google.android.gms.internal.ads.zzgae can not access a member of class com.google.android.gms.internal.ads.zzgah with modifiers "private volatile"
+E/zzgah   ( 6329): 	at java.util.concurrent.atomic.AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl.<init>(AtomicReferenceFieldUpdater.java:361)
+E/zzgah   ( 6329): 	at java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater(AtomicReferenceFieldUpdater.java:115)
+E/zzgah   ( 6329): 	at com.google.android.gms.internal.ads.zzgae.<clinit>(com.google.android.gms:play-services-ads@@24.1.0:2)
+E/zzgah   ( 6329): 	... 16 more
+E/zzgah   ( 6329): Caused by: java.lang.IllegalAccessException: Class com.google.android.gms.internal.ads.zzgae can not access a member of class com.google.android.gms.internal.ads.zzgah with modifiers "private volatile"
+E/zzgah   ( 6329): 	at sun.reflect.Reflection.ensureMemberAccess(Reflection.java:125)
+E/zzgah   ( 6329): 	at sun.reflect.misc.ReflectUtil.ensureMemberAccess(ReflectUtil.java:100)
+E/zzgah   ( 6329): 	at java.util.concurrent.atomic.AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl.<init>(AtomicReferenceFieldUpdater.java:343)
+E/zzgah   ( 6329): 	... 18 more
+W/ConnectionStatusConfig( 6329): Dynamic lookup for intent failed for action: com.google.android.gms.ads.service.START
+I/upreet.rewardly( 6329): Background concurrent mark compact GC freed 3676KB AllocSpace bytes, 3(120KB) LOS objects, 49% free, 5431KB/10MB, paused 781us,6.018ms total 54.502ms
+E/chromium( 6329): [ERROR:aw_browser_terminator.cc(165)] Renderer process (6605) crash detected (code -1).
+I/Ads     ( 6329): Ad failed to load : 0
+I/flutter ( 6329): Rewarded Ad failed to load: LoadAdError(code: 0, domain: com.google.android.gms.ads, message: Unable to obtain a JavascriptEngine., responseInfo: ResponseInfo(responseId: null, mediationAdapterClassName: , adapterResponses: [], loadedAdapterResponseInfo: null), responseExtras: {})
+I/Ads     ( 6329): This request is sent from a test device.
+W/ConnectionStatusConfig( 6329): Dynamic lookup for intent failed for action: com.google.android.gms.ads.service.START
+I/Ads     ( 6329): Ad failed to load : 0
+I/flutter ( 6329): Rewarded Ad failed to load: LoadAdError(code: 0, domain: com.google.android.gms.ads, message: Unable to obtain a JavascriptEngine., responseInfo: ResponseInfo(responseId: null, mediationAdapterClassName: , adapterResponses: [], loadedAdapterResponseInfo: null), responseExtras: {})
+I/Ads     ( 6329): This request is sent from a test device.
+E/chromium( 6329): [ERROR:aw_browser_terminator.cc(165)] Renderer process (6741) crash detected (code -1).
+I/Ads     ( 6329): Ad failed to load : 0
+I/flutter ( 6329): Rewarded Ad failed to load: LoadAdError(code: 0, domain: com.google.android.gms.ads, message: Unable to obtain a JavascriptEngine., responseInfo: ResponseInfo(responseId: null, mediationAdapterClassName: , adapterResponses: [], loadedAdapterResponseInfo: null), responseExtras: {})

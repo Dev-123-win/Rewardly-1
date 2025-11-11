@@ -30,7 +30,7 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AdProviderNew>(context, listen: false).loadRewardedAd();
+      // AdProviderNew now preloads ads in its constructor, so no need to call loadRewardedAd here.
       // Show welcome dialog
       showDialog(
         context: context,
@@ -57,7 +57,8 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-      adProvider.loadRewardedAd();
+      // AdProviderNew now handles preloading internally.
+      // adProvider.loadRewardedAd(); // No longer needed here
       return;
     }
 
@@ -76,7 +77,7 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
             setState(() {
               _showSpinAnimation = false;
             });
-            Provider.of<AdProviderNew>(context, listen: false).loadRewardedAd();
+            // AdProviderNew handles preloading internally, no need to explicitly call loadRewardedAd here.
           }
         });
       },
@@ -144,7 +145,7 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
           listen: false,
         ).recordGameReward(gameType: 'spin', amount: coins);
       }
-      // No longer loading next ad here, it's done after watching ad
+      // AdProviderNew handles preloading internally, no need to explicitly call loadRewardedAd here.
     });
   }
 

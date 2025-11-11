@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../models/ad_milestone.dart';
+import 'dart:async'; // Import for Timer
 
 class AdProviderNew extends ChangeNotifier {
   RewardedAd? rewardedAd;
-  bool isLoading = false;
+  bool _isAdLoading = false; // Use a private flag to manage loading state
+  int _rewardedAdLoadAttempts = 0;
+  static const int _maxAdLoadAttempts = 3; // Max retries for ad loading
+  static const Duration _adLoadRetryDelay = Duration(seconds: 5); // Delay before retrying
+
   final List<AdMilestone> _milestones = [
     AdMilestone(
       requiredWatches: 1,
@@ -30,34 +35,69 @@ class AdProviderNew extends ChangeNotifier {
   int _adsWatchedToday = 0;
   int get adsWatchedToday => _adsWatchedToday;
 
-  void loadRewardedAd() {
-    if (isLoading || rewardedAd != null) return;
-    isLoading = true;
+  AdProviderNew() {
+    _preloadRewardedAd(); // Preload ad when the provider is created
+  }
+
+  void _preloadRewardedAd() {
+    if (_isAdLoading || rewardedAd != null) return;
+    _isAdLoading = true;
+
+    // Using the real AdMob rewarded ad unit ID provided by the user
+    const String adUnitId = 'ca-app-pub-3863562453957252/5980806527';
 
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-3863562453957252/2356285112', // Rewarded Ad Unit ID
+      adUnitId: adUnitId,
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
           rewardedAd = ad;
-          isLoading = false;
+          _isAdLoading = false;
+          _rewardedAdLoadAttempts = 0; // Reset attempts on success
           notifyListeners();
+          debugPrint('Rewarded Ad preloaded successfully.');
         },
         onAdFailedToLoad: (error) {
-          isLoading = false;
+          debugPrint('Rewarded Ad failed to load: $error');
+          _isAdLoading = false;
+          rewardedAd = null; // Ensure ad is null if loading failed
+          _rewardedAdLoadAttempts++;
           notifyListeners();
+          _handleAdLoadFailure();
         },
       ),
     );
   }
 
+  void _handleAdLoadFailure() {
+    if (_rewardedAdLoadAttempts < _maxAdLoadAttempts) {
+      debugPrint('Retrying rewarded ad load in ${_adLoadRetryDelay.inSeconds} seconds...');
+      Timer(_adLoadRetryDelay, () {
+        _preloadRewardedAd();
+      });
+    } else {
+      debugPrint('Max rewarded ad load attempts reached. No ad available.');
+      // Optionally, show a user-friendly message or disable ad-related features
+    }
+  }
+
   Future<void> showRewardedAd({
     required Function(int reward) onAdEarned,
   }) async {
-    if (rewardedAd == null) return;
+    if (rewardedAd == null) {
+      debugPrint('Rewarded Ad not loaded. Attempting to preload...');
+      if (!_isAdLoading) {
+        _preloadRewardedAd(); // Try to load if not already loading
+      }
+      // Optionally, wait for the ad to load or show a message to the user
+      return;
+    }
 
     final currentMilestone = _getNextUncompletedMilestone();
-    if (currentMilestone == null) return;
+    if (currentMilestone == null) {
+      debugPrint('No uncompleted milestones available.');
+      return;
+    }
 
     await rewardedAd!.show(
       onUserEarnedReward: (_, reward) {
@@ -67,14 +107,14 @@ class AdProviderNew extends ChangeNotifier {
     );
 
     rewardedAd = null;
-    loadRewardedAd(); // Preload next ad
+    _preloadRewardedAd(); // Preload next ad immediately after showing one
     notifyListeners();
   }
 
   AdMilestone? _getNextUncompletedMilestone() {
     return _milestones.firstWhere(
       (milestone) => !milestone.isCompleted,
-      orElse: () => _milestones.last,
+      orElse: () => _milestones.last, // Fallback to last if all completed
     );
   }
 
@@ -106,6 +146,7 @@ class AdProviderNew extends ChangeNotifier {
         requiredWatches: i + 1, // Ensure requiredWatches is set correctly
       );
     }
+    _preloadRewardedAd(); // Preload ad after resetting progress
     notifyListeners();
   }
 

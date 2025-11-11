@@ -20,15 +20,23 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    // Add this for multidex support
+    packagingOptions {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.supreet.rewardly"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 21 // Explicitly set minimum SDK to 21 for Google Mobile Ads compatibility
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true // Enable multidex to handle large number of methods
     }
 
     buildTypes {

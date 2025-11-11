@@ -20,10 +20,7 @@ class _WatchAdsScreenState extends State<WatchAdsScreen> {
   @override
   void initState() {
     super.initState();
-    // Pre-load ad when screen initializes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AdProviderNew>(context, listen: false).loadRewardedAd();
-    });
+    // AdProviderNew now preloads ads in its constructor, so no need to call loadRewardedAd here.
   }
 
   Widget _buildMilestoneItem(
@@ -100,7 +97,7 @@ class _WatchAdsScreenState extends State<WatchAdsScreen> {
                       adProvider.showRewardedAd(
                         onAdEarned: (reward) async {
                           await userProvider.recordAdWatch(reward);
-                          adProvider.loadRewardedAd();
+                          // AdProviderNew handles preloading internally, no need to explicitly call loadRewardedAd here.
                         },
                       );
                     } else {
@@ -114,7 +111,7 @@ class _WatchAdsScreenState extends State<WatchAdsScreen> {
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
-                      adProvider.loadRewardedAd();
+                      // AdProviderNew handles preloading internally, no need to explicitly call loadRewardedAd here.
                     }
                   },
                   style: ElevatedButton.styleFrom(

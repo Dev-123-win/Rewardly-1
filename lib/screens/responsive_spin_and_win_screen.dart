@@ -33,9 +33,7 @@ class _ResponsiveSpinAndWinScreenState
   void initState() {
     super.initState();
     _initSharedPreferences();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AdProviderNew>(context, listen: false).loadRewardedAd();
-    });
+    // AdProviderNew now preloads ads in its constructor, so no need to call loadRewardedAd here.
   }
 
   Future<void> _initSharedPreferences() async {
@@ -91,7 +89,8 @@ class _ResponsiveSpinAndWinScreenState
           content: Text('Please wait while we prepare your reward...'),
         ),
       );
-      adProvider.loadRewardedAd();
+      // AdProviderNew now handles preloading internally.
+      // adProvider.loadRewardedAd(); // No longer needed here
       return;
     }
 
@@ -131,7 +130,7 @@ class _ResponsiveSpinAndWinScreenState
     setState(() {
       _isSpinning = false;
     });
-    adProvider.loadRewardedAd();
+    // AdProviderNew handles preloading internally, no need to explicitly call loadRewardedAd here.
   }
 
   @override
