@@ -27,6 +27,12 @@ class TicTacToeStatsDialog extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final dateFormat = DateFormat('MMM d, h:mm a');
 
+    int totalWins = gameHistory.where((game) => game.gameResult == 'win').length;
+    int totalLosses = gameHistory.where((game) => game.gameResult == 'loss').length;
+    int totalDraws = gameHistory.where((game) => game.gameResult == 'draw').length;
+    int calculatedTotalGames = totalWins + totalLosses + totalDraws;
+    double winRate = calculatedTotalGames > 0 ? (totalWins / calculatedTotalGames) * 100 : 0.0;
+
     return Dialog(
       backgroundColor: colorScheme.surface,
       surfaceTintColor: colorScheme.surfaceTint,
@@ -57,7 +63,7 @@ class TicTacToeStatsDialog extends StatelessWidget {
                   context,
                   Iconsax.game,
                   'Total Games',
-                  totalGames.toString(),
+                  calculatedTotalGames.toString(),
                 ),
                 _buildStatCard(
                   context,
@@ -75,7 +81,7 @@ class TicTacToeStatsDialog extends StatelessWidget {
                   context,
                   Iconsax.chart_success,
                   'Win Rate',
-                  '${totalGames > 0 ? ((xScore / totalGames) * 100).toStringAsFixed(1) : '0'}%',
+                  '${winRate.toStringAsFixed(1)}%',
                 ),
                 _buildStatCard(
                   context,
@@ -141,24 +147,36 @@ class TicTacToeStatsDialog extends StatelessWidget {
                     final game = gameHistory[index];
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: game.isWin
+                        backgroundColor: game.gameResult == 'win'
                             ? colorScheme.primaryContainer
-                            : colorScheme.errorContainer,
+                            : game.gameResult == 'draw'
+                                ? colorScheme.surfaceContainerHighest
+                                : colorScheme.errorContainer,
                         child: Icon(
-                          game.isWin
+                          game.gameResult == 'win'
                               ? Iconsax.medal_star
-                              : Iconsax.close_circle,
-                          color: game.isWin
+                              : game.gameResult == 'draw'
+                                  ? Iconsax.refresh
+                                  : Iconsax.close_circle,
+                          color: game.gameResult == 'win'
                               ? colorScheme.primary
-                              : colorScheme.error,
+                              : game.gameResult == 'draw'
+                                  ? colorScheme.outline
+                                  : colorScheme.error,
                         ),
                       ),
                       title: Text(
-                        game.isWin ? 'Victory!' : 'Defeat',
+                        game.gameResult == 'win'
+                            ? 'Victory!'
+                            : game.gameResult == 'draw'
+                                ? 'Draw'
+                                : 'Defeat',
                         style: textTheme.titleSmall?.copyWith(
-                          color: game.isWin
+                          color: game.gameResult == 'win'
                               ? colorScheme.primary
-                              : colorScheme.error,
+                              : game.gameResult == 'draw'
+                                  ? colorScheme.outline
+                                  : colorScheme.error,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

@@ -314,40 +314,44 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                                     ).colorScheme.secondary,
                                   ),
                                   const SizedBox(width: 12),
-                                  Text(
-                                    'Minimum withdrawal: ',
-                                    style:
-                                        (isDesktop
-                                                ? Theme.of(
-                                                    context,
-                                                  ).textTheme.titleMedium
-                                                : Theme.of(
-                                                    context,
-                                                  ).textTheme.bodyLarge)
-                                            ?.copyWith(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSecondaryContainer,
-                                              fontFamily: 'Inter',
-                                            ),
+                                  Expanded(
+                                    child: Text(
+                                      'Minimum withdrawal: ',
+                                      style:
+                                          (isDesktop
+                                                  ? Theme.of(
+                                                      context,
+                                                    ).textTheme.titleMedium
+                                                  : Theme.of(
+                                                      context,
+                                                    ).textTheme.bodyLarge)
+                                              ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSecondaryContainer,
+                                                fontFamily: 'Inter',
+                                              ),
+                                    ),
                                   ),
-                                  Text(
-                                    '$minWithdrawalCoins coins',
-                                    style:
-                                        (isDesktop
-                                                ? Theme.of(
-                                                    context,
-                                                  ).textTheme.titleMedium
-                                                : Theme.of(
-                                                    context,
-                                                  ).textTheme.bodyLarge)
-                                            ?.copyWith(
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.secondary,
-                                              fontFamily: 'Inter',
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                  Expanded(
+                                    child: Text(
+                                      '$minWithdrawalCoins coins',
+                                      style:
+                                          (isDesktop
+                                                  ? Theme.of(
+                                                      context,
+                                                    ).textTheme.titleMedium
+                                                  : Theme.of(
+                                                      context,
+                                                    ).textTheme.bodyLarge)
+                                              ?.copyWith(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.secondary,
+                                                fontFamily: 'Inter',
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                    ),
                                   ),
                                 ],
                               ),

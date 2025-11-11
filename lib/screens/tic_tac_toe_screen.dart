@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
+import 'dart:convert'; // Import for json encoding/decoding
 import '../providers/local_user_provider.dart';
 import '../providers/ad_provider_new.dart';
 import '../widgets/custom_app_bar.dart';
@@ -53,11 +54,17 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     final todayGames = todayStats['tictactoePlayed'] ?? 0;
     final coins = todayStats['tictactoeCoins'] ?? 0;
 
-    // Load game history from shared preferences or local storage
-    // TODO: Implement persistent storage for game history
+    // Load game history from shared preferences
+    final String? historyJson = prefs.getString('ticTacToeGameHistory');
+    if (historyJson != null) {
+      final List<String> historyList = List<String>.from(json.decode(historyJson));
+      gameHistory = historyList
+          .map((item) => TicTacToeHistory.fromMap(json.decode(item)))
+          .toList();
+    }
 
     setState(() {
-      totalGames = todayGames;
+      totalGames = todayGames; // This will be updated by gameHistory length in the dialog
       xScore = todayStats['tictactoeWins'] ?? 0;
       oScore = todayStats['tictatoeLosses'] ?? 0;
       winStreak = todayStats['tictactoeStreak'] ?? 0;
@@ -184,17 +191,17 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
     return null;
   }
 
-  Future<void> _handleRewardEarned(int reward, bool isWin) async {
+  Future<void> _recordGameResult(String result, int coinsEarned) async {
     if (!mounted) return;
 
     setState(() {
-      totalCoinsEarned += reward;
+      totalCoinsEarned += coinsEarned;
       gameHistory.insert(
         0,
         TicTacToeHistory(
           date: DateTime.now(),
-          isWin: isWin,
-          coinsEarned: reward,
+          gameResult: result,
+          coinsEarned: coinsEarned,
           opponent: 'AI',
         ),
       );
@@ -203,6 +210,14 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       }
     });
 
+    // Save game history to shared preferences
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> historyList =
+        gameHistory.map((item) => json.encode(item.toMap())).toList();
+    await prefs.setString('ticTacToeGameHistory', json.encode(historyList));
+  }
+
+  Future<void> _handleRewardClaim(int reward, String gameResult) async {
     if (!mounted) return;
 
     // Show reward message
@@ -301,6 +316,10 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       totalGames = currentGames + 1;
     });
 
+    // Record the game result immediately
+    final String gameOutcome = result == 'X' ? 'win' : (result == 'O' ? 'loss' : 'draw');
+    await _recordGameResult(gameOutcome, 0); // Initial record with 0 coins
+
     if (!mounted) return;
 
     // Show result dialog
@@ -308,19 +327,19 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => TicTacToeResultDialog(
-        result: result == 'X' ? 'win' : (result == 'O' ? 'lose' : 'draw'),
+        result: gameOutcome,
         onClaimCoins: () async {
           if (!mounted) return; // Check mounted here
           Navigator.of(context).pop();
 
-          if (result == 'O') {
-            // No coins for losing
+          if (gameOutcome == 'loss') {
+            // No coins for losing, just reset the game
             _resetGame();
             return;
           }
 
           final adProvider = Provider.of<AdProviderNew>(context, listen: false);
-          final int reward = result == 'X' ? 4 : 2; // 4 for win, 2 for draw
+          final int reward = gameOutcome == 'win' ? 4 : 2; // 4 for win, 2 for draw
 
           if (adProvider.rewardedAd != null) {
             adProvider.showRewardedAd(
@@ -332,8 +351,25 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
 
                 if (!mounted) return;
 
-                // Use a separate function to update state and show messages
-                await _handleRewardEarned(reward, result == 'X');
+                // Update the last game history entry with earned coins
+                if (gameHistory.isNotEmpty) {
+                  final lastGame = gameHistory.removeAt(0);
+                  gameHistory.insert(
+                    0,
+                    TicTacToeHistory(
+                      date: lastGame.date,
+                      gameResult: lastGame.gameResult,
+                      coinsEarned: reward,
+                      opponent: lastGame.opponent,
+                    ),
+                  );
+                  final prefs = await SharedPreferences.getInstance();
+                  final List<String> historyList =
+                      gameHistory.map((item) => json.encode(item.toMap())).toList();
+                  await prefs.setString('ticTacToeGameHistory', json.encode(historyList));
+                }
+
+                await _handleRewardClaim(reward, gameOutcome);
 
                 adProvider.loadRewardedAd(); // Load next ad
               },
@@ -370,7 +406,7 @@ class _TicTacToeScreenState extends State<TicTacToeScreen> {
               showDialog(
                 context: context,
                 builder: (context) => TicTacToeStatsDialog(
-                  totalGames: totalGames,
+                  totalGames: gameHistory.length, // Pass the actual number of games from history
                   winStreak: winStreak,
                   xScore: xScore,
                   oScore: oScore,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart'; // Import Provider
+import '../providers/local_user_provider.dart'; // Import LocalUserProvider
 import 'watch_ads_screen_new.dart';
 import 'spin_and_win_screen_new.dart';
 import 'tic_tac_toe_screen.dart';
@@ -15,33 +16,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late SharedPreferences _prefs;
-  String _displayName = 'Guest User';
-  int _coins = 0;
-  int _dailyStreak = 1;
-
-  @override
-  void initState() {
-    super.initState();
-    _initSharedPreferences();
-  }
-
-  Future<void> _initSharedPreferences() async {
-    _prefs = await SharedPreferences.getInstance();
-    _loadUserData();
-  }
-
-  void _loadUserData() {
-    setState(() {
-      _displayName = _prefs.getString('displayName') ?? 'Guest User';
-      _coins = _prefs.getInt('coins') ?? 0;
-      _dailyStreak = _prefs.getInt('dailyStreak') ?? 1;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    print('HomeScreen build called. Current time: ${DateTime.now()}'); // Debug print
     final colorScheme = Theme.of(context).colorScheme;
+    final localUserProvider = Provider.of<LocalUserProvider>(context); // Listen to LocalUserProvider
+    final currentUser = localUserProvider.currentUser;
+
+    final String displayName = currentUser?.displayName ?? 'Guest User';
+    final int coins = currentUser?.coins ?? 0;
+    final int dailyStreak = currentUser?.dailyStreak ?? 1;
+    print('HomeScreen: Coins from provider: $coins'); // Debug print
 
     return Scaffold(
       body: SafeArea(
@@ -83,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  '₹$_coins',
+                                  '₹$coins',
                                   style: Theme.of(context).textTheme.labelLarge
                                       ?.copyWith(
                                         color: colorScheme.primary,
@@ -114,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 24),
                 // Welcome Text
                 Text(
-                  'Hello, $_displayName!',
+                  'Hello, $displayName!',
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -139,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '$_coins coins',
+                              '$coins coins',
                               style: Theme.of(context).textTheme.headlineMedium
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
@@ -185,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Day $_dailyStreak streak',
+                          'Day $dailyStreak streak',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: colorScheme.primary,

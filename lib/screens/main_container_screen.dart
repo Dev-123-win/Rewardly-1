@@ -17,7 +17,7 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
   int _activeIndex = 0;
 
   final List<Widget> _screens = [
-    const HomeScreen(),
+    HomeScreen(), // Removed const
     const TransactionHistoryScreen(),
     const ProfileScreen(),
     const InviteScreen(),

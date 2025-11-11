@@ -12,6 +12,8 @@ import 'providers/local_user_provider.dart';
 import 'providers/local_config_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/ad_provider_new.dart';
+import 'providers/config_provider.dart'; // Import ConfigProvider
+import 'core/services/config_service.dart'; // Import ConfigService
 
 // Screens
 import 'screens/main_container_screen.dart';
@@ -36,6 +38,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => LocalConfigProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => AdProviderNew()),
+        ChangeNotifierProvider(create: (_) => ConfigProvider(ConfigService())), // Add ConfigProvider with ConfigService
         ChangeNotifierProvider(
           create: (context) => LocalUserProvider(
             configProvider: Provider.of<LocalConfigProvider>(

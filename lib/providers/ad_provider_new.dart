@@ -35,7 +35,7 @@ class AdProviderNew extends ChangeNotifier {
     isLoading = true;
 
     RewardedAd.load(
-      adUnitId: 'your-ad-unit-id', // Replace with actual ad unit ID
+      adUnitId: 'ca-app-pub-3863562453957252/2356285112', // Rewarded Ad Unit ID
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {

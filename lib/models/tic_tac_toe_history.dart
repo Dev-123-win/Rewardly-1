@@ -1,12 +1,12 @@
 class TicTacToeHistory {
   final DateTime date;
-  final bool isWin;
+  final String gameResult; // 'win', 'loss', 'draw'
   final int coinsEarned;
   final String opponent;
 
   TicTacToeHistory({
     required this.date,
-    required this.isWin,
+    required this.gameResult,
     required this.coinsEarned,
     required this.opponent,
   });
@@ -14,7 +14,7 @@ class TicTacToeHistory {
   Map<String, dynamic> toMap() {
     return {
       'date': date.toIso8601String(),
-      'isWin': isWin,
+      'gameResult': gameResult,
       'coinsEarned': coinsEarned,
       'opponent': opponent,
     };
@@ -23,7 +23,7 @@ class TicTacToeHistory {
   factory TicTacToeHistory.fromMap(Map<String, dynamic> map) {
     return TicTacToeHistory(
       date: DateTime.parse(map['date']),
-      isWin: map['isWin'],
+      gameResult: map['gameResult'],
       coinsEarned: map['coinsEarned'],
       opponent: map['opponent'],
     );

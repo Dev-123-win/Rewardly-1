@@ -6,8 +6,8 @@ import 'dart:math';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 import '../providers/local_user_provider.dart';
 import '../providers/ad_provider_new.dart';
-import '../widgets/custom_app_bar.dart';
 import '../widgets/spin_result_dialog.dart';
+import '../widgets/spin_welcome_dialog.dart';
 
 class SpinAndWinScreenNew extends StatefulWidget {
   static const String routeName = '/spin-and-win';
@@ -23,12 +23,19 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
   final List<int> _spinRewards = [0, 3, 6, 9, 10, 30];
   int _currentSpinIndex = 0;
   bool _isSpinning = false;
+  int _availableSpins = 0; // New state variable for available spins
+  bool _showSpinAnimation = false; // New state variable for animation
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<AdProviderNew>(context, listen: false).loadRewardedAd();
+      // Show welcome dialog
+      showDialog(
+        context: context,
+        builder: (context) => const SpinWelcomeDialog(),
+      );
     });
   }
 
@@ -38,15 +45,15 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
     super.dispose();
   }
 
-  void _startSpin() async {
-    if (_isSpinning) return;
+  void _watchAdAndPrepareSpin() async {
+    if (_isSpinning) return; // Cannot watch ad while spinning
 
     final adProvider = Provider.of<AdProviderNew>(context, listen: false);
 
     if (adProvider.rewardedAd == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please wait while we prepare your spin...'),
+          content: Text('Please wait while we prepare your ad...'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -54,42 +61,71 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
       return;
     }
 
-    setState(() {
-      _isSpinning = true;
-    });
-
     adProvider.showRewardedAd(
       onAdEarned: (reward) async {
         if (!mounted) return;
-
-        // Ensure random spin with weighted probabilities
-        final random = Random();
-        final double value = random.nextDouble();
-
-        // 30% chance for 0 coins
-        // 25% chance for 3 coins
-        // 20% chance for 6 coins
-        // 15% chance for 9 coins
-        // 8% chance for 10 coins
-        // 2% chance for 30 coins
-
-        if (value < 0.30) {
-          _currentSpinIndex = 0; // 0 coins
-        } else if (value < 0.55) {
-          _currentSpinIndex = 1; // 3 coins
-        } else if (value < 0.75) {
-          _currentSpinIndex = 2; // 6 coins
-        } else if (value < 0.90) {
-          _currentSpinIndex = 3; // 9 coins
-        } else if (value < 0.98) {
-          _currentSpinIndex = 4; // 10 coins
-        } else {
-          _currentSpinIndex = 5; // 30 coins
-        }
-
-        _wheelNotifier.add(_currentSpinIndex);
+        setState(() {
+          if (_availableSpins < 3) {
+            _availableSpins++;
+          }
+          _showSpinAnimation = true;
+        });
+        // After a short delay, hide the animation and load next ad
+        Future.delayed(const Duration(milliseconds: 800), () {
+          if (mounted) {
+            setState(() {
+              _showSpinAnimation = false;
+            });
+            Provider.of<AdProviderNew>(context, listen: false).loadRewardedAd();
+          }
+        });
       },
     );
+  }
+
+  void _triggerWheelSpin() async {
+    if (_isSpinning) return;
+    if (_availableSpins == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Watch an ad to get a spin!'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSpinning = true;
+      _availableSpins--; // Consume one spin
+    });
+
+    // Ensure random spin with weighted probabilities
+    final random = Random();
+    final double value = random.nextDouble();
+
+    // 30% chance for 0 coins
+    // 25% chance for 3 coins
+    // 20% chance for 6 coins
+    // 15% chance for 9 coins
+    // 8% chance for 10 coins
+    // 2% chance for 30 coins
+
+    if (value < 0.30) {
+      _currentSpinIndex = 0; // 0 coins
+    } else if (value < 0.55) {
+      _currentSpinIndex = 1; // 3 coins
+    } else if (value < 0.75) {
+      _currentSpinIndex = 2; // 6 coins
+    } else if (value < 0.90) {
+      _currentSpinIndex = 3; // 9 coins
+    } else if (value < 0.98) {
+      _currentSpinIndex = 4; // 10 coins
+    } else {
+      _currentSpinIndex = 5; // 30 coins
+    }
+
+    _wheelNotifier.add(_currentSpinIndex);
   }
 
   void _showResult(int coins) {
@@ -97,7 +133,8 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
       context: context,
       barrierDismissible: false,
       builder: (context) => SpinResultDialog(coins: coins),
-    ).then((_) async { // Made the callback async
+    ).then((_) async {
+      // Made the callback async
       if (!mounted) return; // Check mounted state
 
       if (coins > 0) {
@@ -107,131 +144,268 @@ class _SpinAndWinScreenNewState extends State<SpinAndWinScreenNew> {
           listen: false,
         ).recordGameReward(gameType: 'spin', amount: coins);
       }
-      // Load next ad
-      Provider.of<AdProviderNew>(context, listen: false).loadRewardedAd();
+      // No longer loading next ad here, it's done after watching ad
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final items = _spinRewards.map((reward) {
-      final bool isZero = reward == 0;
-      return FortuneItem(
-        child: Transform.rotate(
-          angle: pi / 2, // Rotate text 90 degrees for better readability
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (!isZero) ...[
-                Icon(Iconsax.coin, color: Colors.white, size: 24),
-                const SizedBox(height: 4),
-              ],
-              Text(
-                isZero ? 'Try Again' : reward.toString(),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: isZero ? 16 : 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'Spin and Win',
+          style: TextStyle(
+            color: Colors.black, // Ensure title is visible
+            fontWeight: FontWeight.bold,
           ),
         ),
-        style: FortuneItemStyle(
-          color: isZero
-              ? colorScheme.surfaceVariant
-              : (reward >= 10
-                    ? colorScheme.primary
-                    : colorScheme.primaryContainer),
-          borderColor: colorScheme.outline.withOpacity(0.1),
-          borderWidth: 1,
-        ),
-      );
-    }).toList();
-
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: 'Spin & Win',
-        onBack: () => Navigator.of(context).pop(),
+        centerTitle: false, // Ensure title is not centered if actions push it
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0), // Adjusted padding to the right
+            child: Row(
+              children: [
+                Icon(
+                  Iconsax.wallet, // Changed to wallet icon
+                  color: Theme.of(context).colorScheme.onSurface,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Consumer<LocalUserProvider>(
+                  builder: (context, provider, _) => Text(
+                    '${provider.currentUser?.coins ?? 0}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              colorScheme.surface,
-              colorScheme.surfaceContainerHighest.withOpacity(0.5),
-            ],
-          ),
-        ),
+        color: Theme.of(context).colorScheme.background,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 30),
+              // New "Watch Ad & Spin" button above the wheel
+              FilledButton.icon(
+                onPressed: _isSpinning ? null : _watchAdAndPrepareSpin, // Only watches ad
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                ),
+                icon: Icon(
+                  _isSpinning ? Icons.hourglass_empty : Icons.play_circle,
+                  size: 28,
+                ),
+                label: Text(
+                  _isSpinning ? 'Spinning...' : 'Watch Ad & Get Spin!',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+              // Wheel container with effects
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(24.0),
+                  // Glow effect behind wheel
+                  Container(
+                    width: double.infinity,
+                    height: MediaQuery.of(context).size.width - 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.withOpacity(0.3),
+                          blurRadius: 50,
+                          spreadRadius: 20,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Wheel border decoration
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 3,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.amber.withOpacity(0.2),
+                          spreadRadius: 4,
+                          blurRadius: 15,
+                        ),
+                      ],
+                    ),
                     child: AspectRatio(
                       aspectRatio: 1,
                       child: FortuneWheel(
                         selected: _wheelNotifier.stream,
                         animateFirst: false,
-                        items: items,
+                        items: _spinRewards.map((reward) {
+                          return FortuneItem(
+                            child: Transform.rotate(
+                              angle: pi / 2,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      reward == 0
+                                          ? Icons.refresh
+                                          : Iconsax.coin,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      reward == 0
+                                          ? 'Try Again'
+                                          : '$reward\nCoins',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: reward == 0 ? 16 : 18,
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            style: FortuneItemStyle(
+                              color: reward == 0
+                                  ? Theme.of(context).colorScheme.error // Material 3 red color
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.primaryContainer,
+                              borderWidth: 1,
+                              borderColor: Theme.of(
+                                context,
+                              ).colorScheme.outline,
+                            ),
+                          );
+                        }).toList(),
                         onAnimationEnd: () {
                           setState(() {
                             _isSpinning = false;
                           });
                           _showResult(_spinRewards[_currentSpinIndex]);
                         },
+                        physics: CircularPanPhysics(
+                          duration: const Duration(seconds: 5),
+                          curve: Curves.decelerate,
+                        ),
                         indicators: const <FortuneIndicator>[
                           FortuneIndicator(
                             alignment: Alignment.topCenter,
                             child: TriangleIndicator(
-                              color: Colors.red,
+                              color: Colors.amber,
                               width: 40,
                               height: 40,
                             ),
                           ),
                         ],
+                        styleStrategy: UniformStyleStrategy(
+                          borderWidth: 2,
+                          borderColor: Colors.white24,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Center decoration
+                  GestureDetector(
+                    onTap: _isSpinning ? null : _triggerWheelSpin,
+                    child: Container(
+                      width: 80, // Increased size for better tap target
+                      height: 80, // Increased size for better tap target
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: _showSpinAnimation
+                            ? TweenAnimationBuilder<double>(
+                                tween: Tween<double>(begin: 0.0, end: 1.0),
+                                duration: const Duration(milliseconds: 500),
+                                builder: (context, value, child) {
+                                  return Transform.scale(
+                                    scale: value,
+                                    child: Opacity(
+                                      opacity: value,
+                                      child: Text(
+                                        '+$_availableSpins',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headlineSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                            ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : Text(
+                                _availableSpins > 0 ? 'Spin' : '0',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: _availableSpins > 0
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                    ),
+                              ),
                       ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 40),
-              FilledButton.icon(
-                onPressed: _isSpinning ? null : _startSpin,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  backgroundColor: colorScheme.primary,
-                  disabledBackgroundColor: colorScheme.surfaceVariant,
-                ),
-                icon: Icon(
-                  _isSpinning ? Icons.hourglass_empty : Icons.play_circle,
-                  size: 24,
-                ),
-                label: Text(
-                  _isSpinning ? 'Spinning...' : 'Watch Ad & Get 1 Spin',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: _isSpinning
-                        ? colorScheme.onSurfaceVariant
-                        : colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

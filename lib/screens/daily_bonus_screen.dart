@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:iconsax/iconsax.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/ad_provider_new.dart';
+import '../providers/local_user_provider.dart'; // Import LocalUserProvider
 import '../widgets/custom_app_bar.dart';
 
 class DailyBonusScreen extends StatefulWidget {
@@ -16,147 +15,213 @@ class DailyBonusScreen extends StatefulWidget {
 
 class _DailyBonusScreenState extends State<DailyBonusScreen> {
   bool _isClaimingReward = false;
-  late SharedPreferences _prefs;
 
   @override
   void initState() {
     super.initState();
-    _initSharedPreferences();
+    // Removed ad loading from initState as per user feedback.
+    // Will re-evaluate ad loading after functionality changes.
   }
 
-  Future<void> _initSharedPreferences() async {
-    _prefs = await SharedPreferences.getInstance();
-    setState(() {}); // Rebuild to get initial streak/claimed status
-  }
-
-  int _getDailyStreak() {
-    return _prefs.getInt('dailyStreak') ?? 1;
-  }
-
-  Future<void> _setDailyStreak(int streak) async {
-    await _prefs.setInt('dailyStreak', streak);
-  }
-
-  bool _getHasClaimedToday() {
+  bool _getHasClaimedToday(LocalUserProvider localUserProvider) {
     final today = DateTime.now().toIso8601String().substring(0, 10);
-    return _prefs.getBool('dailyBonusClaimed_$today') ?? false;
+    return localUserProvider.currentUser?.dailyStats[today]?['dailyBonusClaimed'] ?? false;
   }
 
-  Future<void> _setHasClaimedToday(bool claimed) async {
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    await _prefs.setBool('dailyBonusClaimed_$today', claimed);
-  }
-
-  Future<void> _claimDailyReward(int currentStreak) async {
-    if (_isClaimingReward || _getHasClaimedToday()) return;
+  Future<void> _claimDailyReward(int dayToClaim) async {
+    if (_isClaimingReward || _getHasClaimedToday(Provider.of<LocalUserProvider>(context, listen: false))) return;
 
     setState(() {
       _isClaimingReward = true;
     });
 
+    final localUserProvider = Provider.of<LocalUserProvider>(context, listen: false);
     final adProvider = Provider.of<AdProviderNew>(context, listen: false);
 
-    // Show rewarded ad
-    if (adProvider.rewardedAd != null) {
-      await adProvider.showRewardedAd(
-        onAdEarned: (reward) async {
-          // Update user's coins and streak
-          // For now, we'll just mark as claimed and update streak
-          // Actual coin update logic would go here, possibly in LocalUserProvider or similar
-          await _setHasClaimedToday(true);
+    const int coinsToAward = 10; // Daily reward amount
 
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('You claimed 10 coins for Day $currentStreak!'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+    try {
+      // 1. Collect coins and update streak immediately via LocalUserProvider
+      await localUserProvider.claimDailyReward(coinsToAward);
+      // No need to call _setHasClaimedToday, as LocalUserProvider handles persistence and notifies listeners.
 
-          // Reset streak if completed 7 days
-          if (currentStreak >= 7) {
-            await _setDailyStreak(1); // Reset to Day 1
-          } else {
-            await _setDailyStreak(currentStreak + 1);
-          }
-
-          setState(() {
-            _isClaimingReward = false;
-          });
-          adProvider.loadRewardedAd(); // Load next ad
-        },
-      );
-    } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please wait while we prepare your reward...'),
+        SnackBar(
+          content: Text('You claimed $coinsToAward coins for Day $dayToClaim!'),
           behavior: SnackBarBehavior.floating,
         ),
       );
-      adProvider.loadRewardedAd();
+
+      // 2. After snackbar, show rewarded ad
+      adProvider.loadRewardedAd(); // Ensure ad is loaded
+      if (adProvider.rewardedAd != null) {
+        await adProvider.showRewardedAd(
+          onAdEarned: (reward) {
+            // Ad earned, but coins are already given by claimDailyReward.
+            // This callback can be used for additional rewards if needed.
+          },
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No ad available. Please try again later.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error claiming reward: ${e.toString()}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
       setState(() {
         _isClaimingReward = false;
       });
+      adProvider.loadRewardedAd(); // Load next ad for future claims
     }
   }
 
   Widget _buildStreakCard(ColorScheme colorScheme, int currentStreak) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Iconsax.timer_1,
-                    color: colorScheme.primary,
-                    size: 24,
-                  ),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+        side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
+      ),
+      child: Stack(
+        children: [
+          // Background pattern
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    colorScheme.primaryContainer.withOpacity(0.3),
+                    colorScheme.surfaceVariant.withOpacity(0.1),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Row(
                   children: [
-                    Text(
-                      'Current Streak',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.w500,
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.primary.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.local_fire_department_rounded,
+                        color: colorScheme.primary,
+                        size: 28,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Day $currentStreak of 7',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Daily Streak',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Day $currentStreak ',
+                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    color: colorScheme.primary,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: 'of 7',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Stack(
+                  children: [
+                    // Background progress
+                    Container(
+                      height: 12,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        color: colorScheme.surfaceVariant.withOpacity(0.5),
+                      ),
+                    ),
+                    // Animated progress
+                    TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.easeOutCubic,
+                      tween: Tween(
+                        begin: 0,
+                        end: currentStreak / 7,
+                      ),
+                      builder: (context, value, _) => Container(
+                        height: 12,
+                        width: MediaQuery.of(context).size.width * value * 0.7,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          gradient: LinearGradient(
+                            colors: [
+                              colorScheme.primary,
+                              colorScheme.primary.withBlue(
+                                ((colorScheme.primary.blue * 1.2).clamp(0, 255)).toInt(),
+                              ),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colorScheme.primary.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: currentStreak / 7,
-                minHeight: 8,
-                backgroundColor: colorScheme.surfaceVariant,
-                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -166,71 +231,197 @@ class _DailyBonusScreenState extends State<DailyBonusScreen> {
     int day,
     bool isCurrent,
     bool isClaimed,
+    bool hasClaimedToday, // Add hasClaimedToday parameter
   ) {
     final colorScheme = Theme.of(context).colorScheme;
+    final bool isCompleted = isClaimed && !isCurrent;
 
-    return Card(
-      color: isCurrent
-          ? colorScheme.primaryContainer.withOpacity(0.7)
-          : colorScheme.surface,
-      child: Container(
-        width: 100,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isCurrent
-                    ? colorScheme.primary.withOpacity(0.1)
-                    : colorScheme.surfaceVariant.withOpacity(0.5),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isClaimed ? Iconsax.tick_circle : Iconsax.gift,
-                color: isClaimed
-                    ? colorScheme.primary
-                    : isCurrent
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Day $day',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: isCurrent
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Iconsax.coin,
-                  size: 14,
-                  color: isCurrent
-                      ? colorScheme.primary
-                      : colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '10',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isCurrent
-                        ? colorScheme.primary
-                        : colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        color: Colors.transparent, // Make the card background transparent
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: isClaimed ? colorScheme.primaryContainer.withOpacity(0.7) : null, // Filled if claimed
+            gradient: isCurrent && !isClaimed
+                ? LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      colorScheme.primaryContainer.withOpacity(0.7),
+                      colorScheme.primaryContainer.withOpacity(0.3),
+                    ],
+                  )
+                : null,
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: isCurrent && !hasClaimedToday && !_isClaimingReward
+                ? () => _claimDailyReward(day)
+                : null,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Left side - Day indicator and status
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: (isCurrent
+                              ? colorScheme.primary
+                              : colorScheme.surfaceVariant)
+                          .withOpacity(0.15),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Animated container for current day
+                        if (isCurrent)
+                          TweenAnimationBuilder<double>(
+                            duration: const Duration(milliseconds: 1500),
+                            curve: Curves.easeInOut,
+                            tween: Tween(begin: 0.8, end: 1.2),
+                            builder: (context, value, _) => Transform.scale(
+                              scale: value,
+                              child: Container(
+                                width: 64,
+                                height: 64,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: colorScheme.primary.withOpacity(0.2),
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'DAY',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: isCurrent
+                                        ? colorScheme.primary
+                                        : colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 1,
+                                  ),
+                            ),
+                            Text(
+                              day.toString(),
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: isCurrent
+                                        ? colorScheme.primary
+                                        : colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 16),
+                  // Middle - Reward info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: (isCurrent
+                                        ? colorScheme.primary
+                                        : colorScheme.surfaceVariant)
+                                    .withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.monetization_on_rounded,
+                                    size: 16,
+                                    color: isCurrent
+                                        ? colorScheme.primary
+                                        : colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '10 coins',
+                                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                          color: isCurrent
+                                              ? colorScheme.primary
+                                              : colorScheme.onSurfaceVariant,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          isCompleted
+                              ? 'Completed'
+                              : (isCurrent
+                                  ? 'Available to claim'
+                                  : 'Unlock by maintaining streak'),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: isCompleted
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Right side - Status icon
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isCompleted
+                          ? colorScheme.primaryContainer
+                          : (isCurrent
+                              ? colorScheme.primary
+                              : colorScheme.surfaceVariant.withOpacity(0.5)),
+                    ),
+                    child: Icon(
+                      isCompleted
+                          ? Icons.check_circle_outline_rounded
+                          : (isCurrent
+                              ? Icons.card_giftcard_rounded
+                              : Icons.lock_outline_rounded),
+                      color: isCompleted
+                          ? colorScheme.primary
+                          : (isCurrent
+                              ? colorScheme.onPrimary
+                              : colorScheme.onSurfaceVariant),
+                      size: 24,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -239,89 +430,92 @@ class _DailyBonusScreenState extends State<DailyBonusScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final currentStreak = _getDailyStreak();
-    final hasClaimedToday = _getHasClaimedToday();
+    final localUserProvider = Provider.of<LocalUserProvider>(context); // Listen to changes
+    final currentStreak = localUserProvider.currentUser?.dailyStreak ?? 1;
+    final hasClaimedToday = _getHasClaimedToday(localUserProvider);
 
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Daily Bonus',
         onBack: () => Navigator.pop(context),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildStreakCard(colorScheme, currentStreak),
-            const SizedBox(height: 24),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '7 Day Rewards',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              colorScheme.surface,
+              colorScheme.surfaceVariant.withOpacity(0.5),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildStreakCard(colorScheme, currentStreak),
+                const SizedBox(height: 32),
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    color: colorScheme.surface,
+                    border: Border.all(
+                      color: colorScheme.outlineVariant.withOpacity(0.5),
                     ),
-                    const SizedBox(height: 20),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: List.generate(7, (index) {
-                          final day = index + 1;
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              right: index < 6 ? 12.0 : 0,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Weekly Rewards',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
+                              ),
                             ),
-                            child: _buildRewardCard(
+                            const SizedBox(height: 8),
+                            Text(
+                              'Complete daily tasks to earn rewards',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          children: List.generate(7, (index) {
+                            final day = index + 1;
+                            // isClaimed logic needs to be updated to use localUserProvider
+                            final bool isDayClaimed = localUserProvider.currentUser?.dailyStats[DateTime.now().toIso8601String().substring(0, 10)]?['dailyBonusClaimed'] ?? false;
+                            return _buildRewardCard(
                               context,
                               day,
                               day == currentStreak,
-                              day < currentStreak || hasClaimedToday,
-                            ),
-                          );
-                        }),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton.icon(
-                      onPressed: hasClaimedToday || _isClaimingReward
-                          ? null
-                          : () => _claimDailyReward(currentStreak),
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                              day < currentStreak || isDayClaimed, // Use isDayClaimed here
+                              hasClaimedToday,
+                            );
+                          }),
                         ),
                       ),
-                      icon: Icon(
-                        _isClaimingReward
-                            ? Icons.hourglass_empty
-                            : hasClaimedToday
-                            ? Iconsax.tick_circle
-                            : Iconsax.gift,
-                      ),
-                      label: Text(
-                        _isClaimingReward
-                            ? 'Claiming...'
-                            : hasClaimedToday
-                            ? 'Already Claimed'
-                            : 'Claim Daily Reward',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: colorScheme.onPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

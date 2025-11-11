@@ -40,6 +40,7 @@ class LocalTransactionRepository {
     required int amount,
     Map<String, dynamic>? metadata,
   }) async {
+    print('LocalTransactionRepository: Adding transaction for userId: $userId, type: $type, subType: $subType, amount: $amount'); // Debug print
     final transactions = getAllTransactions();
 
     final newTransaction = Transaction(
@@ -60,6 +61,7 @@ class LocalTransactionRepository {
       _transactionsKey,
       json.encode(transactions.map((t) => t.toJson()).toList()),
     );
+    print('LocalTransactionRepository: Transaction added and saved for userId: $userId. Total transactions: ${transactions.length}'); // Debug print
   }
 
   // Get transactions filtered by type
@@ -71,9 +73,12 @@ class LocalTransactionRepository {
 
   // Get user's current balance
   int getUserBalance(String userId) {
-    return getAllTransactions()
+    final userTransactions = getAllTransactions()
         .where((t) => t.userId == userId)
-        .fold(0, (sum, t) => sum + t.amount);
+        .toList();
+    final balance = userTransactions.fold(0, (sum, t) => sum + t.amount);
+    print('LocalTransactionRepository: Getting balance for userId: $userId. Found ${userTransactions.length} transactions. Calculated balance: $balance'); // Debug print
+    return balance;
   }
 
   // Clear all transactions (for testing/debugging)
