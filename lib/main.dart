@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
 
 // Core
 import 'core/theme/app_theme.dart';
@@ -32,21 +33,28 @@ void main() async {
     ),
   );
 
+  final localConfigProvider = LocalConfigProvider();
+  final localUserProvider = LocalUserProvider(configProvider: localConfigProvider);
+
+  // Initialize SharedPreferences once
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  // Initialize LocalUserProvider with SharedPreferences
+  await localUserProvider.initialize(prefs);
+
+  // Ensure a user is signed in or loaded
+  if (localUserProvider.currentUser == null) {
+    await localUserProvider.signInUser('Guest User'); // Create a default user if none exists
+  }
+
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => LocalConfigProvider()),
+        ChangeNotifierProvider(create: (_) => localConfigProvider),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => AdProviderNew()),
         ChangeNotifierProvider(create: (_) => ConfigProvider(ConfigService())), // Add ConfigProvider with ConfigService
-        ChangeNotifierProvider(
-          create: (context) => LocalUserProvider(
-            configProvider: Provider.of<LocalConfigProvider>(
-              context,
-              listen: false,
-            ),
-          ),
-        ),
+        ChangeNotifierProvider(create: (_) => localUserProvider), // Provide the pre-initialized LocalUserProvider
       ],
       child: const MyApp(),
     ),

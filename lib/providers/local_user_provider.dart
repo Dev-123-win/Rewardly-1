@@ -11,7 +11,7 @@ const String kCurrentUserKey = 'current_user';
 
 class LocalUserProvider with ChangeNotifier {
   final LocalConfigProvider? configProvider;
-  late SharedPreferences _prefs;
+  SharedPreferences? _prefs; // Made nullable
   LocalTransactionRepository? _transactionRepo;
   User? _currentUser;
   String? _currentUserId;
@@ -19,21 +19,18 @@ class LocalUserProvider with ChangeNotifier {
   User? get currentUser => _currentUser;
   LocalTransactionRepository? get transactionRepo => _transactionRepo;
 
-  LocalUserProvider({this.configProvider}) {
-    _initPrefs();
-  }
+  LocalUserProvider({this.configProvider}); // Removed _initPrefs call from constructor
 
-  Future<void> _initPrefs() async {
-    _prefs = await SharedPreferences.getInstance();
-    _transactionRepo = LocalTransactionRepository(_prefs);
+  // New initialization method
+  Future<void> initialize(SharedPreferences prefs) async {
+    _prefs = prefs;
+    _transactionRepo = LocalTransactionRepository(_prefs!);
     await loadCurrentUser();
   }
 
   Future<void> signInUser(String displayName) async {
     final userId = 'local_${DateTime.now().millisecondsSinceEpoch}';
     _currentUserId = userId;
-    print('LocalUserProvider: Signing in user with ID: $_currentUserId'); // Debug print
-
     final newUser = User(
       uid: userId,
       displayName: displayName,
@@ -49,7 +46,7 @@ class LocalUserProvider with ChangeNotifier {
       referralCode: '', // Changed to empty string as it's likely non-nullable
     );
 
-    await _prefs.setString(kCurrentUserKey, userId);
+    await _prefs!.setString(kCurrentUserKey, userId);
     _currentUser = newUser;
     await saveCurrentUser();
     notifyListeners();
@@ -96,13 +93,12 @@ class LocalUserProvider with ChangeNotifier {
   Future<void> signOut() async {
     _currentUser = null;
     _currentUserId = null;
-    await _prefs.remove(kCurrentUserKey);
+    await _prefs!.remove(kCurrentUserKey);
     notifyListeners();
   }
 
   Future<void> loadCurrentUser() async {
-    _currentUserId = _prefs.getString(kCurrentUserKey);
-    print('LocalUserProvider: Loading user. Current user ID from prefs: $_currentUserId'); // Debug print
+    _currentUserId = _prefs!.getString(kCurrentUserKey);
 
     if (_currentUserId == null) {
       _currentUser = null;
@@ -110,14 +106,13 @@ class LocalUserProvider with ChangeNotifier {
       return;
     }
 
-    final userData = _prefs.getString('$kUserPrefix$_currentUserId');
+    final userData = _prefs!.getString('$kUserPrefix$_currentUserId'); // Use _prefs!
     if (userData != null) {
       _currentUser = User.fromJson(jsonDecode(userData));
 
       // Ensure balance is correct by checking transactions
       final currentBalance =
           _transactionRepo?.getUserBalance(_currentUserId!) ?? 0;
-      print('LocalUserProvider: Loaded user balance from transactions: $currentBalance for user ID: $_currentUserId'); // Debug print
       if (currentBalance != _currentUser!.coins) {
         _currentUser = _currentUser!.copyWith(coins: currentBalance);
         await saveCurrentUser();
@@ -129,7 +124,7 @@ class LocalUserProvider with ChangeNotifier {
 
   Future<void> saveCurrentUser() async {
     if (_currentUser != null && _currentUserId != null) {
-      await _prefs.setString(
+      await _prefs!.setString( // Use _prefs!
         '$kUserPrefix$_currentUserId',
         json.encode(_currentUser!.toJson()),
       );
@@ -231,7 +226,6 @@ class LocalUserProvider with ChangeNotifier {
 
   Future<void> claimDailyReward(int dailyRewardAmount) async {
     if (_currentUser == null || _currentUserId == null) return;
-    print('LocalUserProvider: Attempting to claim daily reward for user ID: $_currentUserId'); // Debug print
 
     final today = DateTime.now();
     final todayString = today.toIso8601String().substring(0, 10);
@@ -239,7 +233,6 @@ class LocalUserProvider with ChangeNotifier {
     final bool dailyRewardClaimed = todayStats['dailyBonusClaimed'] ?? false;
 
     if (dailyRewardClaimed) {
-      print('LocalUserProvider: Daily reward already claimed today for user ID: $_currentUserId'); // Debug print
       throw Exception("Daily reward already claimed today.");
     }
 
@@ -253,13 +246,11 @@ class LocalUserProvider with ChangeNotifier {
       if (lastClaimDate != yesterdayString) {
         // Streak broken, reset to 1
         _currentUser = _currentUser!.copyWith(dailyStreak: 1);
-        print('LocalUserProvider: Streak broken, resetting to 1 for user ID: $_currentUserId'); // Debug print
       } else {
         // Increment streak
         _currentUser = _currentUser!.copyWith(
           dailyStreak: _currentUser!.dailyStreak + 1,
         );
-        print('LocalUserProvider: Incrementing streak to ${_currentUser!.dailyStreak} for user ID: $_currentUserId'); // Debug print
       }
     }
 
@@ -271,12 +262,10 @@ class LocalUserProvider with ChangeNotifier {
       amount: dailyRewardAmount,
       metadata: {'date': todayString},
     );
-    print('LocalUserProvider: Added transaction for $dailyRewardAmount coins for user ID: $_currentUserId'); // Debug print
 
     // Get updated balance from transactions
     final currentBalance =
         _transactionRepo?.getUserBalance(_currentUserId!) ?? 0;
-    print('LocalUserProvider: Updated balance after transaction: $currentBalance for user ID: $_currentUserId'); // Debug print
 
     // Update user data
     Map<String, dynamic> updatedDailyStats = Map<String, dynamic>.from(
@@ -304,7 +293,6 @@ class LocalUserProvider with ChangeNotifier {
 
     await saveCurrentUser();
     notifyListeners();
-    print('LocalUserProvider: Notified listeners with new user data for user ID: $_currentUserId. New coins: ${_currentUser!.coins}'); // Debug print
   }
 
   Future<void> requestWithdrawal({

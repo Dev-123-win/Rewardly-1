@@ -18,15 +18,15 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
-    print('HomeScreen build called. Current time: ${DateTime.now()}'); // Debug print
     final colorScheme = Theme.of(context).colorScheme;
-    final localUserProvider = Provider.of<LocalUserProvider>(context); // Listen to LocalUserProvider
+    final localUserProvider = Provider.of<LocalUserProvider>(
+      context,
+    ); // Listen to LocalUserProvider
     final currentUser = localUserProvider.currentUser;
 
     final String displayName = currentUser?.displayName ?? 'Guest User';
     final int coins = currentUser?.coins ?? 0;
     final int dailyStreak = currentUser?.dailyStreak ?? 1;
-    print('HomeScreen: Coins from provider: $coins'); // Debug print
 
     return Scaffold(
       body: SafeArea(
